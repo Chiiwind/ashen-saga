@@ -2,6 +2,8 @@
 //  Ashen Saga — entry point
 // ============================================================
 import BattleScene from './BattleScene.js';
+import OverworldScene from './scenes/OverworldScene.js';
+import TownScene from './scenes/TownScene.js';
 
 const config = {
   type: Phaser.CANVAS,   // Canvas renderer displays reliably in the preview pane (WebGL can blank out)
@@ -12,12 +14,12 @@ const config = {
   pixelArt: true,
   roundPixels: true,
   render: { preserveDrawingBuffer: true },
-  fps: { forceSetTimeOut: true, target: 60 },
+  fps: { forceSetTimeOut: true, target: 60, smoothStep: false },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BattleScene],
+  scene: [OverworldScene, TownScene, BattleScene],
 };
 
 window.__GAME = new Phaser.Game(config);

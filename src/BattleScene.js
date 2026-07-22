@@ -6,6 +6,7 @@
 import { HEROES, ENCOUNTERS, ABILITIES } from './data.js';
 import { buildUnitTextures } from './sprites.js';
 import Audio from './audio.js';
+import { world } from './world/state.js';
 
 // which SFX a given ability plays when it lands
 const ABILITY_SFX = {
@@ -38,6 +39,13 @@ const HERO_SLOTS = [
 export default class BattleScene extends Phaser.Scene {
   constructor() { super('battle'); }
 
+  // launched standalone (default gauntlet) or from the overworld
+  // with { encounters, returnTo, foeId }
+  init(data) {
+    this.launch = data || {};
+    this.encList = this.launch.encounters || ENCOUNTERS;
+  }
+
   create() {
     buildUnitTextures(this);
     this.drawBackground();
@@ -48,7 +56,7 @@ export default class BattleScene extends Phaser.Scene {
     this.enemies = [];
     this.encounterIndex = 0;
     this.transitioning = false;
-    this.spawnEnemies(ENCOUNTERS[0].enemies());
+    this.spawnEnemies(this.encList[0].enemies());
 
     // --- audio ----------------------------------------------
     this.input.on('pointerdown', () => Audio.unlock());
@@ -71,7 +79,7 @@ export default class BattleScene extends Phaser.Scene {
       .setDepth(50).setVisible(false);
 
     this.setupInput();
-    this.flash(ENCOUNTERS[0].intro, 1900);
+    this.flash(this.encList[0].intro, 1900);
     this.refreshStatus();
   }
 
@@ -242,7 +250,8 @@ export default class BattleScene extends Phaser.Scene {
       Audio.sfx('confirm');
       this.commitTarget();
     } else if (this.mode === 'over') {
-      this.scene.restart();
+      if (this.overRetreat) this.scene.start(this.launch.returnTo);
+      else this.scene.restart();
     }
   }
 
@@ -629,7 +638,7 @@ export default class BattleScene extends Phaser.Scene {
     if (foesUp && heroesUp) return false;
     if (!heroesUp) { this.endBattle(false); return true; }
     // party won this encounter — are there more?
-    if (this.encounterIndex < ENCOUNTERS.length - 1) { this.advanceEncounter(); return true; }
+    if (this.encounterIndex < this.encList.length - 1) { this.advanceEncounter(); return true; }
     this.endBattle(true);
     return true;
   }
@@ -657,7 +666,7 @@ export default class BattleScene extends Phaser.Scene {
     this.refreshStatus();
     this.time.delayedCall(2600, () => {
       this.encounterIndex++;
-      const enc = ENCOUNTERS[this.encounterIndex];
+      const enc = this.encList[this.encounterIndex];
       if (!enc) { this.transitioning = false; this.endBattle(true); return; }
       this.spawnEnemies(enc.enemies());
       this.flash(enc.intro, 2400);
@@ -675,19 +684,35 @@ export default class BattleScene extends Phaser.Scene {
     Audio.stopMusic();
     Audio.sfx(win ? 'victory' : 'defeat');
     if (win) this.flashScreen(0xffe8a0, 0.35, 500);
+
+    const fromMap = !!this.launch.returnTo;
+    // won a roaming-foe battle → clear it and slip back to the map
+    if (win && fromMap) {
+      if (this.launch.foeId) world.defeatedFoes.add(this.launch.foeId);
+      this.flash('Victory!', 1200);
+      this.time.delayedCall(1200, () => {
+        this.cameras.main.fadeOut(300);
+        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.launch.returnTo));
+      });
+      return;
+    }
+
     const banner = this.add.container(GW / 2, GH / 2 - 30).setDepth(80);
     const bg = this.add.rectangle(0, 0, 560, 130, 0x000000, 0.8).setStrokeStyle(2, UI.gold);
+    const retreat = fromMap && !win;
     const title = this.add.text(0, -22, win ? 'VICTORY' : 'DEFEAT', {
       fontFamily: 'Trebuchet MS', fontSize: '46px', fontStyle: 'bold',
       color: win ? '#ffd24a' : '#c23a3a', stroke: '#000', strokeThickness: 6,
     }).setOrigin(0.5);
     const sub = this.add.text(0, 30,
       win ? 'The warband is broken. Your band endures.  (Enter to play again)'
-          : 'Your band has fallen.  (Enter to retry)', {
+          : (retreat ? 'Your band is routed — you fall back to safety.  (Enter)'
+                     : 'Your band has fallen.  (Enter to retry)'), {
       fontFamily: 'Trebuchet MS', fontSize: '16px', color: UI.text,
     }).setOrigin(0.5);
     banner.add([bg, title, sub]);
     banner.setScale(0.6); banner.setAlpha(0);
     this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut' });
+    this.overRetreat = retreat;    // consumed by confirm()
   }
 }

@@ -5,3 +5,4 @@ Thumbs.db
 
 # dev-only screenshot captures (see /__shot in server.js)
 _shot*.png
+_preview.png
