@@ -4,7 +4,7 @@
 import BattleScene from './BattleScene.js';
 
 const config = {
-  type: Phaser.AUTO,
+  type: Phaser.CANVAS,   // Canvas renderer displays reliably in the preview pane (WebGL can blank out)
   parent: 'game',
   width: 960,
   height: 540,
