@@ -117,6 +117,57 @@ const PAINTERS = {
     g.fillStyle(0x8affd2, 0.5); g.fillCircle(52, 22, 9);
   },
 
+  // Beastman Gor — goat-headed, furred, crude cleaver
+  beastman(g) {
+    shadow(g);
+    outlineRect(g, 28, 56, 8, 22, 0x5a4432);   // furry legs
+    outlineRect(g, 40, 56, 8, 22, 0x5a4432);
+    g.fillStyle(0x2a2018); g.fillRect(27, 74, 10, 6); g.fillRect(39, 74, 10, 6); // hooves
+    outlineRect(g, 24, 34, 26, 24, 0x6b5238);  // furred torso
+    g.fillStyle(0x4a3826); g.fillRect(24, 46, 26, 4); // belly shade
+    g.fillStyle(0x8a6a44); g.fillCircle(24, 36, 6); g.fillCircle(50, 36, 6); // shoulders
+    // goat head
+    g.fillStyle(0x7a5c3c); g.fillEllipse(38, 24, 18, 16);
+    g.fillStyle(0x5a4432); g.fillEllipse(42, 27, 10, 9);   // snout
+    g.fillStyle(0xd23a2a); g.fillRect(35, 21, 2, 2); g.fillRect(41, 21, 2, 2); // eyes
+    // curved horns
+    g.fillStyle(0xe8e0c8);
+    g.fillTriangle(30, 16, 34, 18, 22, 4);
+    g.fillTriangle(44, 16, 40, 18, 54, 4);
+    // cleaver
+    g.fillStyle(0x4a3420); g.fillRect(52, 30, 4, 40);
+    g.fillStyle(0x14131a); g.fillRect(50, 26, 18, 14);
+    g.fillStyle(0x9aa0aa); g.fillRect(52, 28, 14, 10);
+  },
+
+  // Chaos Marauder (boss) — dark plate, horned helm, great axe
+  marauder(g) {
+    shadow(g);
+    g.fillStyle(0x000000, 0.2); g.fillEllipse(36, 84, 56, 12); // heavier shadow
+    outlineRect(g, 25, 54, 10, 26, 0x2a2a34);  // armoured legs
+    outlineRect(g, 39, 54, 10, 26, 0x2a2a34);
+    g.fillStyle(0x14141c); g.fillRect(24, 76, 12, 6); g.fillRect(38, 76, 12, 6);
+    outlineRect(g, 20, 28, 32, 28, 0x33313e);  // dark plate torso
+    g.fillStyle(0x8a1a1a); g.fillRect(34, 30, 4, 24); // blood-red trim
+    g.fillStyle(0xd8a838); g.fillRect(33, 40, 6, 4);  // chaos boss
+    // spiked pauldrons
+    g.fillStyle(0x3d3b48); g.fillCircle(21, 30, 8); g.fillCircle(51, 30, 8);
+    g.fillStyle(0x1a1a22); g.fillTriangle(15, 26, 21, 22, 18, 34);
+    g.fillStyle(0x1a1a22); g.fillTriangle(57, 26, 51, 22, 54, 34);
+    // horned helm
+    outlineRect(g, 29, 12, 16, 14, 0x26252f);
+    g.fillStyle(0x8a1a1a); g.fillRect(32, 17, 10, 3);  // eye slit glow
+    g.fillStyle(0xff4a3a); g.fillRect(33, 18, 3, 1); g.fillRect(39, 18, 3, 1);
+    g.fillStyle(0xdcd4bc);                              // horns
+    g.fillTriangle(29, 14, 33, 12, 18, 2);
+    g.fillTriangle(45, 14, 41, 12, 56, 2);
+    // great axe
+    g.fillStyle(0x2a1c12); g.fillRect(56, 16, 5, 62);
+    g.fillStyle(0x14131a); g.fillTriangle(48, 12, 74, 24, 48, 36);
+    g.fillStyle(0x6a2020); g.fillTriangle(50, 16, 70, 24, 50, 33);  // blood-iron blade
+    g.fillStyle(0xb03030); g.fillTriangle(52, 19, 64, 24, 52, 30);
+  },
+
   // Orc Brute — big, hulking, tusks, crude club
   brute(g) {
     shadow(g);
@@ -146,5 +197,26 @@ export function buildUnitTextures(scene) {
     g.generateTexture('unit_' + key, W, H);
     g.destroy();
   }
+  buildFxTextures(scene);
   return { W, H };
+}
+
+// Small particle textures (soft glow dot + ash fleck).
+export function buildFxTextures(scene) {
+  if (!scene.textures.exists('p_dot')) {
+    const g = scene.add.graphics();
+    // fake radial glow: concentric fading rings
+    for (let r = 8; r >= 1; r--) {
+      g.fillStyle(0xffffff, 0.16);
+      g.fillCircle(8, 8, r);
+    }
+    g.generateTexture('p_dot', 16, 16);
+    g.destroy();
+  }
+  if (!scene.textures.exists('p_ash')) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 1); g.fillRect(0, 0, 3, 3);
+    g.generateTexture('p_ash', 3, 3);
+    g.destroy();
+  }
 }

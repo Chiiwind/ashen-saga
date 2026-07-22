@@ -27,6 +27,9 @@ export const ABILITIES = {
   gobStab:     { name: 'Rusty Stab',    kind: 'phys',  target: 'enemy',      power: 1.0,  mp: 0,  desc: 'A jagged goblin blade.' },
   hex:         { name: 'Night Hex',     kind: 'magic', target: 'enemy',      power: 1.1,  mp: 0,  desc: 'A sputtering dark curse.' },
   brutalClub:  { name: 'Brutal Club',   kind: 'phys',  target: 'enemy',      power: 1.5,  mp: 0,  desc: 'A crushing overhead swing.' },
+  cleave:      { name: 'Cleave',        kind: 'phys',  target: 'allEnemies', power: 1.1,  mp: 0,  desc: 'A wide, dark-forged arc.' },
+  gore:        { name: 'Gore',          kind: 'phys',  target: 'enemy',      power: 1.4,  mp: 0,  desc: 'A savage horned charge.' },
+  darkBolt:    { name: 'Dark Bolt',     kind: 'magic', target: 'enemy',      power: 1.5,  mp: 0,  desc: 'A lance of ruinous power.' },
 };
 
 // --- Party (heroes) ----------------------------------------
@@ -59,20 +62,33 @@ export const HEROES = [
   },
 ];
 
-// --- Enemy encounter ---------------------------------------
-export function makeEncounter() {
-  return [
-    { id: 'gob1', name: 'Goblin Raider', sprite: 'goblin',
-      maxHp: 60, maxMp: 0, atk: 20, def: 10, mag: 8, res: 8, speed: 9,
-      skills: ['gobStab'], ai: 'melee' },
-    { id: 'gob2', name: 'Goblin Raider', sprite: 'goblin',
-      maxHp: 60, maxMp: 0, atk: 20, def: 10, mag: 8, res: 8, speed: 10,
-      skills: ['gobStab'], ai: 'melee' },
-    { id: 'sham', name: 'Night Shaman', sprite: 'shaman',
-      maxHp: 54, maxMp: 30, atk: 12, def: 8, mag: 22, res: 14, speed: 8,
-      skills: ['hex'], ai: 'caster' },
-    { id: 'brute', name: 'Orc Brute', sprite: 'brute',
-      maxHp: 140, maxMp: 0, atk: 30, def: 16, mag: 4, res: 8, speed: 6,
-      skills: ['brutalClub', 'gobStab'], ai: 'melee' },
-  ];
+// --- Enemy templates ---------------------------------------
+const ENEMIES = {
+  goblin:  { name: 'Goblin Raider', sprite: 'goblin',
+    maxHp: 60, maxMp: 0, atk: 20, def: 10, mag: 8, res: 8, speed: 9,  skills: ['gobStab'] },
+  shaman:  { name: 'Night Shaman', sprite: 'shaman',
+    maxHp: 54, maxMp: 30, atk: 12, def: 8, mag: 22, res: 14, speed: 8, skills: ['hex'] },
+  brute:   { name: 'Orc Brute', sprite: 'brute',
+    maxHp: 140, maxMp: 0, atk: 30, def: 16, mag: 4, res: 8, speed: 6, skills: ['brutalClub', 'gobStab'] },
+  beastman:{ name: 'Beastman Gor', sprite: 'beastman',
+    maxHp: 84, maxMp: 0, atk: 26, def: 12, mag: 6, res: 8, speed: 9, skills: ['gore', 'gobStab'] },
+  marauder:{ name: 'Chaos Marauder', sprite: 'marauder', boss: true,
+    maxHp: 320, maxMp: 20, atk: 34, def: 20, mag: 18, res: 16, speed: 8, skills: ['cleave', 'darkBolt', 'brutalClub'] },
+};
+
+function inst(key, i) {
+  return { id: key + i, ...JSON.parse(JSON.stringify(ENEMIES[key])) };
 }
+
+// --- Encounters (played in order) --------------------------
+export const ENCOUNTERS = [
+  { name: 'Ambush on the Ash Road',
+    intro: 'An ambush! Foes close in!',
+    enemies: () => [inst('goblin', 1), inst('goblin', 2), inst('shaman', 1), inst('brute', 1)] },
+  { name: 'The Warband',
+    intro: 'A warband bars the road — a Chaos Marauder leads them!',
+    enemies: () => [inst('marauder', 1), inst('beastman', 1), inst('beastman', 2), inst('goblin', 1)] },
+];
+
+// legacy single-encounter helper (still used by any old callers)
+export function makeEncounter() { return ENCOUNTERS[0].enemies(); }

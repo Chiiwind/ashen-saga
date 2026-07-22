@@ -3,8 +3,17 @@
 //  FF6-style Active Time Battle (Wait mode): gauges fill in
 //  real time, then pause while you choose a command + target.
 // ============================================================
-import { HEROES, makeEncounter, ABILITIES } from './data.js';
+import { HEROES, ENCOUNTERS, ABILITIES } from './data.js';
 import { buildUnitTextures } from './sprites.js';
+import Audio from './audio.js';
+
+// which SFX a given ability plays when it lands
+const ABILITY_SFX = {
+  attack: 'attack', gobStab: 'attack', brutalClub: 'attack', gore: 'attack',
+  cleave: 'attack', recklessSwing: 'attack',
+  fireball: 'fire', cinderStorm: 'fire', smite: 'fire', hex: 'fire', darkBolt: 'fire',
+  healingPrayer: 'heal', oathRoar: 'buff',
+};
 
 const GW = 960, GH = 540;
 const ATB_RATE = 2.6;            // gauge units per (speed * second)
@@ -32,13 +41,19 @@ export default class BattleScene extends Phaser.Scene {
   create() {
     buildUnitTextures(this);
     this.drawBackground();
+    this.buildAtmosphere();
 
     // --- build combatants -----------------------------------
     this.heroes = HEROES.map((d, i) => this.makeCombatant(d, 'hero', HERO_SLOTS[i]));
-    const enc = makeEncounter();
-    // order enemies so the brute (slot 0) is the tanky one
-    this.enemies = enc.map((d, i) => this.makeCombatant(d, 'enemy', ENEMY_SLOTS[i]));
-    this.all = [...this.heroes, ...this.enemies];
+    this.enemies = [];
+    this.encounterIndex = 0;
+    this.transitioning = false;
+    this.spawnEnemies(ENCOUNTERS[0].enemies());
+
+    // --- audio ----------------------------------------------
+    this.input.on('pointerdown', () => Audio.unlock());
+    this.input.keyboard.on('keydown', () => Audio.unlock());
+    Audio.startMusic();
 
     // --- ui panels ------------------------------------------
     this.buildStatusWindow();
@@ -56,8 +71,29 @@ export default class BattleScene extends Phaser.Scene {
       .setDepth(50).setVisible(false);
 
     this.setupInput();
-    this.flash('An ambush! Foes close in!', 1600);
+    this.flash(ENCOUNTERS[0].intro, 1900);
     this.refreshStatus();
+  }
+
+  // atmosphere: drifting ash + a vignette
+  buildAtmosphere() {
+    this.add.particles(0, 0, 'p_ash', {
+      x: { min: 0, max: GW }, y: -6,
+      lifespan: 9000, speedY: { min: 8, max: 24 }, speedX: { min: -8, max: 8 },
+      scale: { min: 0.5, max: 1.7 }, alpha: { start: 0.35, end: 0 },
+      tint: [0x6a6a72, 0x9a9488, 0x4a4a52], frequency: 160, quantity: 1,
+    }).setDepth(3);
+
+    if (!this.textures.exists('vignette')) {
+      const cv = this.textures.createCanvas('vignette', 128, 128);
+      const ctx = cv.getContext();
+      const grd = ctx.createRadialGradient(64, 60, 20, 64, 64, 90);
+      grd.addColorStop(0, 'rgba(0,0,0,0)');
+      grd.addColorStop(1, 'rgba(0,0,0,0.6)');
+      ctx.fillStyle = grd; ctx.fillRect(0, 0, 128, 128);
+      cv.refresh();
+    }
+    this.add.image(GW / 2, GH / 2, 'vignette').setDisplaySize(GW, GH).setDepth(35).setAlpha(0.9);
   }
 
   // =========================================================
@@ -97,20 +133,30 @@ export default class BattleScene extends Phaser.Scene {
     };
     const spr = this.add.image(slot.x, slot.y, 'unit_' + d.sprite).setDepth(10);
     if (side === 'hero') spr.setFlipX(true);        // party faces left
-    spr.setScale(1.15);
+    spr.setScale(d.boss ? 1.55 : 1.15);
     c.sprite = spr;
     c.homeX = slot.x;
     c.homeY = slot.y;
+    c.barOff = d.boss ? 72 : 50;                     // ui offset above sprite
     // floating name for enemies (helps targeting)
     if (side === 'enemy') {
-      c.tag = this.add.text(slot.x, slot.y - 56, d.name, {
-        fontFamily: 'Trebuchet MS', fontSize: '13px', color: UI.dim,
-        stroke: '#000', strokeThickness: 3,
+      c.tag = this.add.text(slot.x, slot.y - (d.boss ? 82 : 56), d.name, {
+        fontFamily: 'Trebuchet MS', fontSize: d.boss ? '15px' : '13px',
+        color: d.boss ? '#ff8a6a' : UI.dim, stroke: '#000', strokeThickness: 3,
       }).setOrigin(0.5).setDepth(11);
-      // tiny hp pip bar over enemies
-      c.hpbar = this.add.graphics().setDepth(11);
+      c.hpbar = this.add.graphics().setDepth(11);    // tiny hp pip bar
     }
     return c;
+  }
+
+  // (re)populate the enemy side for an encounter
+  spawnEnemies(list) {
+    for (const e of this.enemies) {
+      if (e.sprite) e.sprite.destroy();
+      if (e.tag) e.tag.destroy();
+      if (e.hpbar) e.hpbar.destroy();
+    }
+    this.enemies = list.map((d, i) => this.makeCombatant(d, 'enemy', ENEMY_SLOTS[i % ENEMY_SLOTS.length]));
   }
 
   buildStatusWindow() {
@@ -178,10 +224,12 @@ export default class BattleScene extends Phaser.Scene {
   nav(dir) {
     if (this.mode === 'command' && this.menu) {
       this.menu.index = Phaser.Math.Wrap(this.menu.index + dir, 0, this.menu.items.length);
+      Audio.sfx('cursor');
       this.renderMenu();
     } else if (this.mode === 'target') {
       const n = this.targetList.length;
       this.targetIndex = Phaser.Math.Wrap(this.targetIndex + dir, 0, n);
+      Audio.sfx('cursor');
       this.updateTargetCursor();
     }
   }
@@ -189,8 +237,9 @@ export default class BattleScene extends Phaser.Scene {
   confirm() {
     if (this.mode === 'command' && this.menu) {
       const item = this.menu.items[this.menu.index];
-      if (item.enabled !== false) item.onSelect();
+      if (item.enabled !== false) { Audio.sfx('confirm'); item.onSelect(); }
     } else if (this.mode === 'target') {
+      Audio.sfx('confirm');
       this.commitTarget();
     } else if (this.mode === 'over') {
       this.scene.restart();
@@ -199,8 +248,10 @@ export default class BattleScene extends Phaser.Scene {
 
   cancel() {
     if (this.mode === 'command' && this.menu && this.menu.onCancel) {
+      Audio.sfx('cancel');
       this.menu.onCancel();
     } else if (this.mode === 'target') {
+      Audio.sfx('cancel');
       this.cancelTarget();
     }
   }
@@ -211,7 +262,8 @@ export default class BattleScene extends Phaser.Scene {
   update(time, delta) {
     if (this.mode !== 'run') return;
     const dt = delta / 1000;
-    for (const c of this.all) {
+    const all = [...this.heroes, ...this.enemies];
+    for (const c of all) {
       if (!c.alive) continue;
       if (c.atb < 100) {
         c.atb = Math.min(100, c.atb + c.speed * ATB_RATE * dt);
@@ -221,7 +273,7 @@ export default class BattleScene extends Phaser.Scene {
     this.refreshStatus();
 
     // pick the unit that has been ready longest
-    const ready = this.all.filter(c => c.alive && c.ready).sort((a, b) => a.order - b.order);
+    const ready = all.filter(c => c.alive && c.ready).sort((a, b) => a.order - b.order);
     if (ready.length) {
       const actor = ready[0];
       if (actor.side === 'hero') this.beginCommand(actor);
@@ -385,8 +437,10 @@ export default class BattleScene extends Phaser.Scene {
     const dir = actor.side === 'hero' ? -1 : 1;
 
     const strike = () => {
+      Audio.sfx(ABILITY_SFX[aid] || 'attack');
       if (ab.buffAtk) {
         actor.atkBuff = ab.buffAtk;
+        this.burst(actor.sprite.x, actor.sprite.y - 20, 0xffd24a, 14, { speed: 90, gravityY: -60, lifespan: 700 });
         this.spawnText(actor.sprite.x, actor.sprite.y - 40, 'ATK UP', '#ffd24a');
         this.finishAction(actor, ab);
         return;
@@ -419,11 +473,13 @@ export default class BattleScene extends Phaser.Scene {
 
   resolveHit(actor, target, ab, isMagic) {
     if (!target.alive) return;
+    const tx = target.sprite.x, ty = target.sprite.y - 12;
     if (ab.heal) {
       const amt = Math.round(actor.mag * ab.power * Phaser.Math.FloatBetween(0.9, 1.1));
       target.hp = Math.min(target.maxHp, target.hp + amt);
-      this.spawnText(target.sprite.x, target.sprite.y - 40, '+' + amt, '#7dff8a');
+      this.spawnText(tx, ty - 28, '+' + amt, '#7dff8a');
       this.tintPulse(target, 0x7dff8a);
+      this.burst(tx, ty, 0x8dffa0, 14, { speed: 60, gravityY: -50, lifespan: 800, scale: 0.5 });
       return;
     }
     const atkS = isMagic ? actor.mag : actor.atk * actor.atkBuff;
@@ -431,9 +487,13 @@ export default class BattleScene extends Phaser.Scene {
     const raw = Math.max(1, atkS * ab.power - defS * 0.6);
     const dmg = Math.round(raw * Phaser.Math.FloatBetween(0.85, 1.15));
     target.hp = Math.max(0, target.hp - dmg);
-    this.spawnText(target.sprite.x, target.sprite.y - 40, '' + dmg, '#ffffff');
+    this.spawnText(tx, ty - 28, '' + dmg, '#ffffff');
     this.tintPulse(target, 0xff5a5a);
-    this.cameras.main.shake(120, 0.006);
+    // spark burst — fiery for magic, pale steel for physical
+    this.burst(tx, ty, isMagic ? 0xff9a3a : 0xfff2a0, isMagic ? 16 : 10,
+      { speed: isMagic ? 150 : 180, lifespan: isMagic ? 550 : 380, scale: 0.55 });
+    this.cameras.main.shake(dmg > 40 ? 200 : 120, dmg > 40 ? 0.010 : 0.006);
+    if (dmg > 40) this.flashScreen(0xffffff, 0.22, 160);
     if (target.hp <= 0) this.killUnit(target);
   }
 
@@ -454,13 +514,31 @@ export default class BattleScene extends Phaser.Scene {
   //  FX helpers
   // =========================================================
   castFx(target, aid) {
-    const colorMap = { fireball: 0xff7a1a, cinderStorm: 0xff5a1a, smite: 0xffe08a, hex: 0x9a5aff, healingPrayer: 0x7dff8a };
+    const colorMap = { fireball: 0xff7a1a, cinderStorm: 0xff5a1a, smite: 0xffe08a, hex: 0x9a5aff, darkBolt: 0xc23aff, healingPrayer: 0x7dff8a };
     const color = colorMap[aid] || 0xffd24a;
     const fx = this.add.circle(target.sprite.x, target.sprite.y - 10, 6, color, 0.9).setDepth(30);
+    fx.setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({
       targets: fx, radius: 46, alpha: 0, duration: 420,
       onComplete: () => fx.destroy(),
     });
+  }
+
+  // additive particle burst
+  burst(x, y, tint, count, opts = {}) {
+    const { speed = 140, lifespan = 500, scale = 0.6, gravityY = 0 } = opts;
+    const e = this.add.particles(x, y, 'p_dot', {
+      speed: { min: speed * 0.3, max: speed }, angle: { min: 0, max: 360 },
+      lifespan, scale: { start: scale, end: 0 }, alpha: { start: 1, end: 0 },
+      tint, gravityY, blendMode: Phaser.BlendModes.ADD, emitting: false,
+    }).setDepth(30);
+    e.explode(count, x, y);
+    this.time.delayedCall(lifespan + 80, () => e.destroy());
+  }
+
+  flashScreen(color = 0xffffff, alpha = 0.3, dur = 160) {
+    const r = this.add.rectangle(GW / 2, GH / 2, GW, GH, color, alpha).setDepth(70);
+    this.tweens.add({ targets: r, alpha: 0, duration: dur, onComplete: () => r.destroy() });
   }
 
   tintPulse(unit, color) {
@@ -478,6 +556,7 @@ export default class BattleScene extends Phaser.Scene {
 
   killUnit(unit) {
     unit.alive = false; unit.ready = false;
+    Audio.sfx('ko');
     this.tweens.add({ targets: unit.sprite, alpha: 0.12, angle: unit.side === 'hero' ? -90 : 90, y: unit.sprite.y + 14, duration: 500 });
     unit.sprite.setTint(0x333340);
     if (unit.tag) unit.tag.setColor('#5a544a');
@@ -511,7 +590,8 @@ export default class BattleScene extends Phaser.Scene {
     for (const e of this.enemies) {
       if (!e.hpbar || !e.alive) continue;
       e.hpbar.clear();
-      this.bar(e.hpbar, e.sprite.x - 26, e.sprite.y - 48, 52, 5, e.hp / e.maxHp, 0xc23a3a, 0x2a1414);
+      const w = e.boss ? 78 : 52;
+      this.bar(e.hpbar, e.sprite.x - w / 2, e.sprite.y - e.barOff, w, e.boss ? 7 : 5, e.hp / e.maxHp, 0xc23a3a, 0x2a1414);
     }
   }
 
@@ -543,26 +623,71 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   checkEnd() {
+    if (this.mode === 'over' || this.transitioning) return true;
     const heroesUp = this.heroes.some(c => c.alive);
     const foesUp = this.enemies.some(c => c.alive);
     if (foesUp && heroesUp) return false;
+    if (!heroesUp) { this.endBattle(false); return true; }
+    // party won this encounter — are there more?
+    if (this.encounterIndex < ENCOUNTERS.length - 1) { this.advanceEncounter(); return true; }
+    this.endBattle(true);
+    return true;
+  }
+
+  advanceEncounter() {
+    if (this.transitioning) return;   // never fire twice
+    this.transitioning = true;
+    this.mode = 'busy';
+    this.setCommandVisible(false);
+    this.clearMenuNodes(); this.clearHighlight();
+    this.cursor.setVisible(false); this.tweens.killTweensOf(this.cursor);
+    Audio.sfx('victory');
+    this.flash('The foes fall... but more approach!', 2400);
+    // patch up the band between fights: heal survivors, revive the fallen
+    for (const h of this.heroes) {
+      if (h.alive) {
+        h.hp = Math.min(h.maxHp, h.hp + Math.round(h.maxHp * 0.30));
+      } else {
+        h.alive = true; h.hp = Math.round(h.maxHp * 0.25);
+        h.sprite.setAlpha(1).setAngle(0).clearTint(); h.sprite.y = h.homeY;
+      }
+      h.mp = Math.min(h.maxMp, h.mp + Math.round(h.maxMp * 0.30));
+      h.atb = Phaser.Math.Between(0, 20); h.ready = false; h.order = 0; h.atkBuff = 1;
+    }
+    this.refreshStatus();
+    this.time.delayedCall(2600, () => {
+      this.encounterIndex++;
+      const enc = ENCOUNTERS[this.encounterIndex];
+      if (!enc) { this.transitioning = false; this.endBattle(true); return; }
+      this.spawnEnemies(enc.enemies());
+      this.flash(enc.intro, 2400);
+      this.refreshStatus();
+      this.transitioning = false;
+      this.mode = 'run';
+    });
+  }
+
+  endBattle(win) {
     this.mode = 'over';
     this.setCommandVisible(false);
     this.clearMenuNodes(); this.clearHighlight();
-    this.cursor.setVisible(false);
-    const win = heroesUp;
+    this.cursor.setVisible(false); this.tweens.killTweensOf(this.cursor);
+    Audio.stopMusic();
+    Audio.sfx(win ? 'victory' : 'defeat');
+    if (win) this.flashScreen(0xffe8a0, 0.35, 500);
     const banner = this.add.container(GW / 2, GH / 2 - 30).setDepth(80);
-    const bg = this.add.rectangle(0, 0, 520, 130, 0x000000, 0.78).setStrokeStyle(2, UI.gold);
+    const bg = this.add.rectangle(0, 0, 560, 130, 0x000000, 0.8).setStrokeStyle(2, UI.gold);
     const title = this.add.text(0, -22, win ? 'VICTORY' : 'DEFEAT', {
       fontFamily: 'Trebuchet MS', fontSize: '46px', fontStyle: 'bold',
       color: win ? '#ffd24a' : '#c23a3a', stroke: '#000', strokeThickness: 6,
     }).setOrigin(0.5);
-    const sub = this.add.text(0, 30, win ? 'The foe is broken.  (Enter to fight again)' : 'Your band has fallen.  (Enter to retry)', {
+    const sub = this.add.text(0, 30,
+      win ? 'The warband is broken. Your band endures.  (Enter to play again)'
+          : 'Your band has fallen.  (Enter to retry)', {
       fontFamily: 'Trebuchet MS', fontSize: '16px', color: UI.text,
     }).setOrigin(0.5);
     banner.add([bg, title, sub]);
     banner.setScale(0.6); banner.setAlpha(0);
     this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut' });
-    return true;
   }
 }
