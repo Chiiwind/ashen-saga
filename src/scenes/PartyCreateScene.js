@@ -74,7 +74,7 @@ export default class PartyCreateScene extends Phaser.Scene {
   buildDetail() {
     const x = 344, y = 84, w = 592, h = 300;
     this.panel(x, y, w, h);
-    this.portrait = this.add.image(x + 90, y + 150, 'unit_priest').setScale(2.1);
+    this.portrait = this.add.sprite(x + 90, y + 150, 'dungeon').setScale(4.5).setFlipX(true);
     this.dName = this.add.text(x + 176, y + 22, '', {
       fontFamily: 'Trebuchet MS', fontSize: '24px', fontStyle: 'bold', color: '#ffd24a',
     });
@@ -114,7 +114,7 @@ export default class PartyCreateScene extends Phaser.Scene {
       const x = 344 + i * 120, y = 464;
       const g = this.add.graphics();
       g.lineStyle(2, 0x3a3a48, 1); g.strokeRoundedRect(x, y, 108, 42, 6);
-      const img = this.add.image(x + 22, y + 21, 'unit_priest').setScale(0.6).setVisible(false);
+      const img = this.add.sprite(x + 22, y + 21, 'dungeon').setScale(1.7).setFlipX(true).setVisible(false);
       const nm = this.add.text(x + 40, y + 8, '', {
         fontFamily: 'Trebuchet MS', fontSize: '13px', color: '#e8e0d0',
       });
@@ -179,7 +179,8 @@ export default class PartyCreateScene extends Phaser.Scene {
       n.t.setColor(sel ? '#ffd24a' : '#e8e0d0');
     });
 
-    this.portrait.setTexture('unit_' + cls.sprite).setFlipX(true);
+    if (this.anims.exists(cls.atlas + '_idle')) this.portrait.play(cls.atlas + '_idle', true);
+    this.portrait.setFlipX(true);
     this.dName.setText(cls.name);
     this.dRole.setText(cls.role);
     this.dBlurb.setText(cls.blurb);
@@ -206,7 +207,8 @@ export default class PartyCreateScene extends Phaser.Scene {
     this.stripNodes.forEach((sn, i) => {
       const c = this.built[i];
       if (c) {
-        sn.img.setTexture('unit_' + CLASSES[c.classId].sprite).setFlipX(true).setVisible(true);
+        if (this.anims.exists(CLASSES[c.classId].atlas + '_idle')) sn.img.play(CLASSES[c.classId].atlas + '_idle', true);
+        sn.img.setFlipX(true).setVisible(true);
         sn.nm.setText(c.name);
         sn.cl.setText(CLASSES[c.classId].name);
       } else {

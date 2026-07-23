@@ -53,7 +53,8 @@ export default class PartyMenuScene extends Phaser.Scene {
     this.panel(x, y, w, h);
     this.memberNodes = this.party.map((c, i) => {
       const ry = y + 14 + i * 84;
-      const img = this.add.image(x + 34, ry + 26, 'unit_' + CLASSES[c.classId].sprite).setScale(0.85).setFlipX(true);
+      const img = this.add.sprite(x + 34, ry + 26, 'dungeon').setScale(2).setFlipX(true);
+      if (this.anims.exists(CLASSES[c.classId].atlas + '_idle')) img.play(CLASSES[c.classId].atlas + '_idle');
       const nm = this.add.text(x + 66, ry + 6, '', { fontFamily: 'Trebuchet MS', fontSize: '16px', color: '#e8e0d0' });
       const cl = this.add.text(x + 66, ry + 28, '', { fontFamily: 'Trebuchet MS', fontSize: '12px', color: '#8a857a' });
       const ap = this.add.text(x + 66, ry + 46, '', { fontFamily: 'Trebuchet MS', fontSize: '13px', color: '#9affb0' });

@@ -11,7 +11,7 @@ import { world } from './state.js';
 import { CLASS_MAP_CHAR } from './mapChars.js';
 
 const STEP_MS = 150;
-const MAP_SCALE = 1.4;           // 32px atlas frames -> map size
+const MAP_SCALE = 1.9;           // 32px atlas frames -> map size
 
 export default class MapScene extends Phaser.Scene {
   create(data) {
