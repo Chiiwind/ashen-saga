@@ -6,3 +6,11 @@ Thumbs.db
 # dev-only screenshot captures (see /__shot in server.js)
 _shot*.png
 _preview.png
+
+# asset sheets kept locally for evaluation until upstream licence is confirmed
+# (dungeon.* is 0x72 CC0 and IS committed — see assets/CREDITS.md)
+assets/npc.*
+assets/village.*
+assets/bonfire.*
+assets/weapon_slash.*
+assets/*.zip
