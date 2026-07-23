@@ -83,6 +83,97 @@ const PAINTERS = {
     g.fillStyle(0xc0c6d0); g.fillTriangle(48, 24, 64, 30, 48, 37);
   },
 
+  // Greatsword — heavy plate soldier with a huge two-hander
+  warrior(g) {
+    shadow(g);
+    outlineRect(g, 25, 52, 10, 26, 0x7a828e);   // legs (plate)
+    outlineRect(g, 39, 52, 10, 26, 0x7a828e);
+    g.fillStyle(0x2a2d38); g.fillRect(24, 74, 12, 6); g.fillRect(38, 74, 12, 6);
+    outlineRect(g, 22, 28, 28, 26, 0x9aa2b0);   // breastplate
+    g.fillStyle(0x6a7280); g.fillRect(22, 40, 28, 3);
+    g.fillStyle(0xb8c0cc); g.fillCircle(23, 30, 7); g.fillCircle(49, 30, 7); // pauldrons
+    outlineRect(g, 30, 12, 14, 13, 0xb8c0cc);   // helm
+    g.fillStyle(0x2a2d38); g.fillRect(32, 18, 10, 4);  // visor
+    g.fillStyle(0x9aa2b0); g.fillTriangle(35, 8, 39, 8, 37, 2); // crest
+    // greatsword held high on the right
+    g.fillStyle(0x6b4a2a); g.fillRect(53, 42, 4, 10);
+    g.fillStyle(0x8b93a3); g.fillRect(50, 44, 10, 4);  // crossguard
+    g.fillStyle(0xd8dde4); g.fillRect(54, 2, 3, 42);   // blade
+    g.fillStyle(0xf0f4f8); g.fillRect(54, 2, 1, 42);
+  },
+
+  // Waywatcher — hooded elf archer with a longbow
+  archer(g) {
+    shadow(g);
+    outlineRect(g, 27, 54, 8, 24, 0x2f5a3a);   // legs
+    outlineRect(g, 39, 54, 8, 24, 0x2f5a3a);
+    g.fillStyle(0x1f3d28); g.fillRect(26, 74, 10, 6); g.fillRect(38, 74, 10, 6);
+    outlineRect(g, 25, 32, 24, 24, 0x3f7d52);  // green tunic/cloak
+    g.fillStyle(0x2f5a3a); g.fillRect(25, 44, 24, 3);
+    g.fillStyle(0xe2b48c); g.fillCircle(37, 24, 8);   // face
+    g.fillStyle(0x2a5a38); g.fillTriangle(27, 24, 47, 24, 37, 6); // hood
+    g.fillStyle(0x1f4a2c); g.fillTriangle(30, 22, 44, 22, 37, 10);
+    g.fillStyle(0x2a2d38); g.fillRect(33, 22, 2, 2); g.fillRect(39, 22, 2, 2);
+    // longbow on the right
+    g.lineStyle(3, 0x6b4a2a, 1);
+    g.beginPath(); g.arc(56, 34, 26, -1.1, 1.1, false); g.strokePath();
+    g.lineStyle(1, 0xcfc8b0, 1);
+    g.beginPath(); g.moveTo(56 + 26 * Math.cos(-1.1), 34 + 26 * Math.sin(-1.1));
+    g.lineTo(56 + 26 * Math.cos(1.1), 34 + 26 * Math.sin(1.1)); g.strokePath();
+    g.lineStyle();
+  },
+
+  // Witch Hunter — black hat + coat, pistol and blade
+  hunter(g) {
+    shadow(g);
+    outlineRect(g, 27, 54, 8, 24, 0x2a2a30);   // legs
+    outlineRect(g, 39, 54, 8, 24, 0x2a2a30);
+    g.fillStyle(0x14141a); g.fillRect(26, 74, 10, 6); g.fillRect(38, 74, 10, 6);
+    outlineRect(g, 25, 30, 24, 26, 0x33313e);  // black coat
+    g.fillStyle(0xe8e0d0); g.fillRect(35, 30, 4, 24); // white shirt line
+    g.fillStyle(0x8a1a1a); g.fillRect(25, 42, 24, 3); // red sash
+    g.fillStyle(0xe2b48c); g.fillCircle(37, 22, 8);   // face
+    g.fillStyle(0x2a2d38); g.fillRect(33, 21, 2, 2); g.fillRect(39, 21, 2, 2);
+    g.fillStyle(0x1a1a1f); g.fillRect(27, 12, 20, 5); // hat brim
+    g.fillStyle(0x1a1a1f); g.fillRect(31, 4, 12, 9);  // hat crown
+    // pistol
+    g.fillStyle(0x3a2a1a); g.fillRect(50, 40, 10, 4);
+    g.fillStyle(0x6a6a72); g.fillRect(56, 38, 6, 3);
+  },
+
+  // Grey Wizard — grey robe + wide hat, wisp of grey wind
+  greywiz(g) {
+    shadow(g);
+    g.fillStyle(0x14131a); g.fillTriangle(20, 78, 52, 78, 36, 40); // robe outline
+    g.fillStyle(0x6a6a74); g.fillTriangle(22, 76, 50, 76, 36, 42);
+    g.fillStyle(0x4c4c56); g.fillTriangle(36, 44, 44, 74, 36, 74);
+    outlineRect(g, 30, 30, 12, 14, 0x6a6a74);
+    g.fillStyle(0xe2b48c); g.fillCircle(36, 24, 8);
+    g.fillStyle(0x2a2d38); g.fillRect(33, 23, 2, 2); g.fillRect(39, 23, 2, 2);
+    g.fillStyle(0xbcbcc6); g.fillRect(31, 26, 10, 3); // grey beard
+    g.fillStyle(0x3a3a42); g.fillTriangle(22, 16, 50, 16, 36, 2); // wide hat
+    g.fillStyle(0x2a2a30); g.fillRect(22, 14, 28, 4);
+    // grey-wind staff
+    g.fillStyle(0x4a4438); g.fillRect(52, 20, 4, 58);
+    g.fillStyle(0xbcc0c8, 0.5); g.fillCircle(54, 16, 8);
+    g.fillStyle(0xe8ecf0, 0.8); g.fillCircle(54, 16, 3);
+  },
+
+  // Halfling Physician — small, satchel, apron, herb pouch
+  physician(g) {
+    shadow(g);
+    g.fillStyle(0x3a2a18); g.fillRect(28, 58, 5, 18); g.fillRect(39, 58, 5, 18); // stubby legs
+    g.fillStyle(0x2a2018); g.fillRect(27, 72, 7, 6); g.fillRect(38, 72, 7, 6);
+    outlineRect(g, 26, 40, 20, 20, 0xd8d0c0);  // white shirt
+    g.fillStyle(0x9a6a3a); g.fillRect(29, 44, 14, 12); // apron
+    g.fillStyle(0x6a4a2a); g.fillRect(44, 42, 8, 12);  // satchel
+    g.fillStyle(0xd8a838); g.fillRect(46, 46, 4, 3);
+    g.fillStyle(0xe2b48c); g.fillCircle(36, 32, 9);    // big head
+    g.fillStyle(0x2a2d38); g.fillRect(32, 31, 2, 2); g.fillRect(39, 31, 2, 2);
+    g.fillStyle(0xc47a3a); g.fillRect(29, 22, 14, 6);  // curly hair
+    g.fillStyle(0xc47a3a); g.fillCircle(30, 26, 3); g.fillCircle(42, 26, 3);
+  },
+
   // Goblin Raider — small, green, big ears, crude dagger
   goblin(g) {
     shadow(g);

@@ -3,18 +3,14 @@
 //  FF6-style Active Time Battle (Wait mode): gauges fill in
 //  real time, then pause while you choose a command + target.
 // ============================================================
-import { HEROES, ENCOUNTERS, ABILITIES } from './data.js';
+import { ENCOUNTERS, ABILITIES } from './data.js';
 import { buildUnitTextures } from './sprites.js';
 import Audio from './audio.js';
 import { world } from './world/state.js';
+import { ensureParty, toBattleHero, grantRewards } from './rpg/party.js';
 
-// which SFX a given ability plays when it lands
-const ABILITY_SFX = {
-  attack: 'attack', gobStab: 'attack', brutalClub: 'attack', gore: 'attack',
-  cleave: 'attack', recklessSwing: 'attack',
-  fireball: 'fire', cinderStorm: 'fire', smite: 'fire', hex: 'fire', darkBolt: 'fire',
-  healingPrayer: 'heal', oathRoar: 'buff',
-};
+// map a stat to its runtime buff-multiplier key on a combatant
+const BUFF_KEY = { atk: 'atkBuff', def: 'defBuff', mag: 'magBuff', res: 'resBuff', speed: 'spdBuff' };
 
 const GW = 960, GH = 540;
 const ATB_RATE = 2.6;            // gauge units per (speed * second)
@@ -23,17 +19,20 @@ const UI = {
   text: '#e8e0d0', dim: '#9a9488', hi: 0x2c2c46,
 };
 
-// battlefield anchor positions
+// battlefield anchor positions (up to 5 a side)
 const ENEMY_SLOTS = [
-  { x: 300, y: 200 },  // brute (front)
-  { x: 165, y: 140 },
-  { x: 150, y: 300 },
-  { x: 320, y: 355 },
+  { x: 320, y: 175 },  // slot 0 = front (boss)
+  { x: 150, y: 115 },
+  { x: 145, y: 245 },
+  { x: 300, y: 320 },
+  { x: 205, y: 360 },
 ];
 const HERO_SLOTS = [
-  { x: 690, y: 170 },
-  { x: 770, y: 260 },
-  { x: 690, y: 350 },
+  { x: 690, y: 135 },
+  { x: 782, y: 188 },
+  { x: 690, y: 245 },
+  { x: 782, y: 300 },
+  { x: 690, y: 352 },
 ];
 
 export default class BattleScene extends Phaser.Scene {
@@ -52,10 +51,13 @@ export default class BattleScene extends Phaser.Scene {
     this.buildAtmosphere();
 
     // --- build combatants -----------------------------------
-    this.heroes = HEROES.map((d, i) => this.makeCombatant(d, 'hero', HERO_SLOTS[i]));
+    const party = ensureParty();
+    this.heroes = party.slice(0, 5).map((c, i) => this.makeCombatant(toBattleHero(c), 'hero', HERO_SLOTS[i]));
     this.enemies = [];
     this.encounterIndex = 0;
     this.transitioning = false;
+    this.earnedExp = 0;
+    this.earnedAp = 0;
     this.spawnEnemies(this.encList[0].enemies());
 
     // --- audio ----------------------------------------------
@@ -136,8 +138,11 @@ export default class BattleScene extends Phaser.Scene {
   makeCombatant(d, side, slot) {
     const c = {
       ...d, side, slot,
-      hp: d.maxHp, mp: d.maxMp, atb: Phaser.Math.Between(0, 30),
-      alive: true, ready: false, atkBuff: 1, order: 0,
+      hp: d.hp != null ? d.hp : d.maxHp,        // heroes carry persistent HP/MP
+      mp: d.mp != null ? d.mp : d.maxMp,
+      atb: Phaser.Math.Between(0, 30),
+      alive: true, ready: false, order: 0,
+      atkBuff: 1, defBuff: 1, magBuff: 1, resBuff: 1, spdBuff: 1,
     };
     const spr = this.add.image(slot.x, slot.y, 'unit_' + d.sprite).setDepth(10);
     if (side === 'hero') spr.setFlipX(true);        // party faces left
@@ -169,17 +174,19 @@ export default class BattleScene extends Phaser.Scene {
 
   buildStatusWindow() {
     const x = 486, y = 404, w = GW - x - 10, h = GH - y - 6;
+    this.statusX = x; this.statusW = w;
     this.panel(x, y, w, h);
+    const rh = 24;
     this.rowNodes = this.heroes.map((hchar, i) => {
-      const ry = y + 14 + i * 40;
-      const name = this.add.text(x + 16, ry, hchar.name, {
-        fontFamily: 'Trebuchet MS', fontSize: '17px', color: UI.text,
+      const ry = y + 8 + i * rh;
+      const name = this.add.text(x + 12, ry, '', {
+        fontFamily: 'Trebuchet MS', fontSize: '14px', color: UI.text,
       });
-      const hp = this.add.text(x + 250, ry, '', {
-        fontFamily: 'Trebuchet MS', fontSize: '15px', color: UI.text,
-      });
-      const mp = this.add.text(x + 360, ry, '', {
-        fontFamily: 'Trebuchet MS', fontSize: '15px', color: '#8ab6ff',
+      const hp = this.add.text(x + 168, ry, '', {
+        fontFamily: 'Trebuchet MS', fontSize: '13px', color: UI.text,
+      }).setOrigin(0, 0);
+      const mp = this.add.text(x + 250, ry, '', {
+        fontFamily: 'Trebuchet MS', fontSize: '13px', color: '#8ab6ff',
       });
       const bars = this.add.graphics();
       return { hchar, name, hp, mp, bars, ry, x };
@@ -250,8 +257,12 @@ export default class BattleScene extends Phaser.Scene {
       Audio.sfx('confirm');
       this.commitTarget();
     } else if (this.mode === 'over') {
-      if (this.overRetreat) this.scene.start(this.launch.returnTo);
-      else this.scene.restart();
+      if (this.endRoute === 'return') {
+        this.cameras.main.fadeOut(250);
+        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.launch.returnTo));
+      } else {
+        this.scene.restart();
+      }
     }
   }
 
@@ -275,7 +286,7 @@ export default class BattleScene extends Phaser.Scene {
     for (const c of all) {
       if (!c.alive) continue;
       if (c.atb < 100) {
-        c.atb = Math.min(100, c.atb + c.speed * ATB_RATE * dt);
+        c.atb = Math.min(100, c.atb + c.speed * c.spdBuff * ATB_RATE * dt);
         if (c.atb >= 100 && !c.ready) { c.ready = true; c.order = ++this.readyOrder; }
       }
     }
@@ -335,6 +346,10 @@ export default class BattleScene extends Phaser.Scene {
     if (ab.target === 'self') { this.executeAction(hero, aid, [hero]); return; }
     if (ab.target === 'allEnemies') {
       this.executeAction(hero, aid, this.sideOf(hero).foes.filter(c => c.alive));
+      return;
+    }
+    if (ab.target === 'allAllies') {
+      this.executeAction(hero, aid, this.sideOf(hero).allies.filter(c => c.alive));
       return;
     }
     // single target selection
@@ -445,17 +460,18 @@ export default class BattleScene extends Phaser.Scene {
     const primary = targets[0];
     const dir = actor.side === 'hero' ? -1 : 1;
 
+    const pureBuff = !!ab.buff && !ab.power && !ab.heal;   // guard, mark, tonic, etc.
+    const cast = isMagic || pureBuff || ab.heal;            // ranged/support animation
+
     const strike = () => {
-      Audio.sfx(ABILITY_SFX[aid] || 'attack');
-      if (ab.buffAtk) {
-        actor.atkBuff = ab.buffAtk;
-        this.burst(actor.sprite.x, actor.sprite.y - 20, 0xffd24a, 14, { speed: 90, gravityY: -60, lifespan: 700 });
-        this.spawnText(actor.sprite.x, actor.sprite.y - 40, 'ATK UP', '#ffd24a');
+      Audio.sfx(this.abilitySound(ab, isMagic));
+      if (pureBuff) {
+        targets.forEach(t => this.applyBuff(actor, t, ab.buff));
         this.finishAction(actor, ab);
         return;
       }
       targets.forEach(t => this.resolveHit(actor, t, ab, isMagic));
-      // recoil (Reckless Swing)
+      // recoil (Reckless Swing / Grudge Strike)
       if (ab.recoil) {
         const self = Math.round(actor.maxHp * ab.recoil);
         actor.hp = Math.max(1, actor.hp - self);
@@ -464,7 +480,7 @@ export default class BattleScene extends Phaser.Scene {
       this.finishAction(actor, ab);
     };
 
-    if (isMagic || ab.buffAtk) {
+    if (cast) {
       // small charge, then flare on target(s)
       this.tweens.add({
         targets: actor.sprite, scaleX: 1.25, scaleY: 1.25, duration: 200, yoyo: true,
@@ -484,26 +500,53 @@ export default class BattleScene extends Phaser.Scene {
     if (!target.alive) return;
     const tx = target.sprite.x, ty = target.sprite.y - 12;
     if (ab.heal) {
-      const amt = Math.round(actor.mag * ab.power * Phaser.Math.FloatBetween(0.9, 1.1));
+      const amt = Math.round(actor.mag * actor.magBuff * ab.power * Phaser.Math.FloatBetween(0.9, 1.1));
       target.hp = Math.min(target.maxHp, target.hp + amt);
       this.spawnText(tx, ty - 28, '+' + amt, '#7dff8a');
       this.tintPulse(target, 0x7dff8a);
       this.burst(tx, ty, 0x8dffa0, 14, { speed: 60, gravityY: -50, lifespan: 800, scale: 0.5 });
       return;
     }
-    const atkS = isMagic ? actor.mag : actor.atk * actor.atkBuff;
-    const defS = isMagic ? target.res : target.def;
+    const atkS = isMagic ? actor.mag * actor.magBuff : actor.atk * actor.atkBuff;
+    const defS = isMagic ? target.res * target.resBuff : target.def * target.defBuff;
     const raw = Math.max(1, atkS * ab.power - defS * 0.6);
-    const dmg = Math.round(raw * Phaser.Math.FloatBetween(0.85, 1.15));
+    let dmg = Math.round(raw * Phaser.Math.FloatBetween(0.85, 1.15));
+    const crit = ab.crit && Math.random() < ab.crit;
+    if (crit) dmg = Math.round(dmg * 1.8);
     target.hp = Math.max(0, target.hp - dmg);
-    this.spawnText(tx, ty - 28, '' + dmg, '#ffffff');
+    this.spawnText(tx, ty - 28, (crit ? '' + dmg + '!' : '' + dmg), crit ? '#ffd24a' : '#ffffff');
     this.tintPulse(target, 0xff5a5a);
-    // spark burst — fiery for magic, pale steel for physical
     this.burst(tx, ty, isMagic ? 0xff9a3a : 0xfff2a0, isMagic ? 16 : 10,
       { speed: isMagic ? 150 : 180, lifespan: isMagic ? 550 : 380, scale: 0.55 });
     this.cameras.main.shake(dmg > 40 ? 200 : 120, dmg > 40 ? 0.010 : 0.006);
-    if (dmg > 40) this.flashScreen(0xffffff, 0.22, 160);
+    if (dmg > 40 || crit) this.flashScreen(0xffffff, 0.22, 160);
+    // life drain — heal the caster for a fraction
+    if (ab.drain) {
+      const back = Math.max(1, Math.round(dmg * ab.drain));
+      actor.hp = Math.min(actor.maxHp, actor.hp + back);
+      this.spawnText(actor.sprite.x, actor.sprite.y - 40, '+' + back, '#8dff8a');
+    }
+    // damage that also debuffs (e.g. Sunder)
+    if (ab.buff && ab.power && target.hp > 0) this.applyBuff(actor, target, ab.buff);
     if (target.hp <= 0) this.killUnit(target);
+  }
+
+  applyBuff(actor, target, buff) {
+    const key = BUFF_KEY[buff.stat];
+    if (!key) return;
+    target[key] = buff.mult;                     // set (does not stack)
+    const up = buff.mult >= 1;
+    const label = { atk: 'ATK', def: 'DEF', mag: 'MAG', res: 'RES', speed: 'SPD' }[buff.stat];
+    this.spawnText(target.sprite.x, target.sprite.y - 40, label + (up ? ' UP' : ' DOWN'), up ? '#ffd24a' : '#d07ad0');
+    this.burst(target.sprite.x, target.sprite.y - 18, up ? 0xffd24a : 0xd07ad0, 12,
+      { speed: up ? 90 : 60, gravityY: up ? -50 : 40, lifespan: 650 });
+    this.tintPulse(target, up ? 0xffe08a : 0xc86ad0);
+  }
+
+  abilitySound(ab, isMagic) {
+    if (ab.heal) return 'heal';
+    if (ab.buff && !ab.power) return 'buff';
+    return isMagic ? 'fire' : 'attack';
   }
 
   finishAction(actor, ab) {
@@ -565,6 +608,10 @@ export default class BattleScene extends Phaser.Scene {
 
   killUnit(unit) {
     unit.alive = false; unit.ready = false;
+    if (unit.side === 'enemy') {
+      this.earnedExp += unit.exp || 0;
+      this.earnedAp += unit.ap || 0;
+    }
     Audio.sfx('ko');
     this.tweens.add({ targets: unit.sprite, alpha: 0.12, angle: unit.side === 'hero' ? -90 : 90, y: unit.sprite.y + 14, duration: 500 });
     unit.sprite.setTint(0x333340);
@@ -583,17 +630,18 @@ export default class BattleScene extends Phaser.Scene {
   // =========================================================
   refreshStatus() {
     if (!this.rowNodes) return;
+    const bx = this.statusX + 330, bw = 118;
     for (const r of this.rowNodes) {
       const c = r.hchar;
+      const lv = c.charRef ? c.charRef.level : 1;
+      r.name.setText(`${c.name}  ${'Lv' + lv}`);
       r.hp.setText(`${c.hp}/${c.maxHp}`);
-      r.mp.setText(c.maxMp ? `MP ${c.mp}` : '');
+      r.mp.setText(c.maxMp ? `${c.mp}` : '');
       r.name.setColor(c.alive ? UI.text : '#6a655a');
       const g = r.bars; g.clear();
-      // hp bar
-      this.bar(g, r.x + 250, r.ry + 20, 100, 7, c.hp / c.maxHp, 0x3aa03a, 0x1c3a1c);
-      // atb bar
+      this.bar(g, bx, r.ry + 2, bw, 6, c.hp / c.maxHp, 0x3aa03a, 0x1c3a1c);
       const atbColor = c.ready ? 0xffd24a : 0x5a8ad0;
-      this.bar(g, r.x + 250, r.ry + 30, 100, 5, c.atb / 100, atbColor, 0x1a2436);
+      this.bar(g, bx, r.ry + 11, bw, 4, c.atb / 100, atbColor, 0x1a2436);
     }
     // enemy hp pips
     for (const e of this.enemies) {
@@ -617,7 +665,7 @@ export default class BattleScene extends Phaser.Scene {
     if (!r) return;
     this.rowHi = this.add.graphics().setDepth(40);
     this.rowHi.fillStyle(UI.hi, 0.5);
-    this.rowHi.fillRoundedRect(r.x + 8, r.ry - 4, GW - r.x - 26, 34, 6);
+    this.rowHi.fillRoundedRect(r.x + 6, r.ry - 2, GW - r.x - 22, 22, 4);
     r.name.setDepth(41); r.hp.setDepth(41); r.mp.setDepth(41); r.bars.setDepth(41);
   }
   clearHighlight() { if (this.rowHi) { this.rowHi.destroy(); this.rowHi = null; } }
@@ -661,7 +709,8 @@ export default class BattleScene extends Phaser.Scene {
         h.sprite.setAlpha(1).setAngle(0).clearTint(); h.sprite.y = h.homeY;
       }
       h.mp = Math.min(h.maxMp, h.mp + Math.round(h.maxMp * 0.30));
-      h.atb = Phaser.Math.Between(0, 20); h.ready = false; h.order = 0; h.atkBuff = 1;
+      h.atb = Phaser.Math.Between(0, 20); h.ready = false; h.order = 0;
+      h.atkBuff = 1; h.defBuff = 1; h.magBuff = 1; h.resBuff = 1; h.spdBuff = 1;
     }
     this.refreshStatus();
     this.time.delayedCall(2600, () => {
@@ -676,6 +725,19 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
 
+  // write battle HP/MP back to the persistent party
+  persistParty(mode) {
+    for (const h of this.heroes) {
+      const c = h.charRef;
+      if (!c) continue;
+      let hp = h.hp, mp = h.mp;
+      if (mode === 'full') { hp = h.maxHp; mp = h.maxMp; }
+      else if (hp <= 0) hp = Math.round(h.maxHp * 0.30);  // victory: revive the downed
+      c.hp = Math.max(0, Math.min(hp, h.maxHp));
+      c.mp = Math.max(0, Math.min(mp, h.maxMp));
+    }
+  }
+
   endBattle(win) {
     this.mode = 'over';
     this.setCommandVisible(false);
@@ -686,33 +748,44 @@ export default class BattleScene extends Phaser.Scene {
     if (win) this.flashScreen(0xffe8a0, 0.35, 500);
 
     const fromMap = !!this.launch.returnTo;
-    // won a roaming-foe battle → clear it and slip back to the map
-    if (win && fromMap) {
-      if (this.launch.foeId) world.defeatedFoes.add(this.launch.foeId);
-      this.flash('Victory!', 1200);
-      this.time.delayedCall(1200, () => {
-        this.cameras.main.fadeOut(300);
-        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.launch.returnTo));
-      });
-      return;
+    let events = [];
+    if (win) {
+      if (fromMap && this.launch.foeId) world.defeatedFoes.add(this.launch.foeId);
+      this.persistParty('keep');                                  // carry wounds
+      events = grantRewards(world.party, this.earnedExp, this.earnedAp);
+    } else {
+      this.persistParty('full');                                  // routed → fall back, patched up
+    }
+    this.endRoute = fromMap ? 'return' : 'restart';
+
+    // banner
+    const lines = [];
+    if (win) {
+      lines.push(`+${this.earnedExp} EXP    +${this.earnedAp} AP  (each)`);
+      for (const e of events) lines.push(`${e.name} reached Lv ${e.level}!`);
+      lines.push(this.endRoute === 'return' ? 'Enter to continue' : 'Enter to play again');
+    } else {
+      lines.push(this.endRoute === 'return'
+        ? 'Your band is routed — you fall back to safety.'
+        : 'Your band has fallen.');
+      lines.push('Enter to continue');
     }
 
-    const banner = this.add.container(GW / 2, GH / 2 - 30).setDepth(80);
-    const bg = this.add.rectangle(0, 0, 560, 130, 0x000000, 0.8).setStrokeStyle(2, UI.gold);
-    const retreat = fromMap && !win;
-    const title = this.add.text(0, -22, win ? 'VICTORY' : 'DEFEAT', {
-      fontFamily: 'Trebuchet MS', fontSize: '46px', fontStyle: 'bold',
+    const h = 84 + lines.length * 22;
+    const banner = this.add.container(GW / 2, GH / 2 - 20).setDepth(80);
+    const bg = this.add.rectangle(0, 0, 580, h, 0x000000, 0.82).setStrokeStyle(2, UI.gold);
+    const title = this.add.text(0, -h / 2 + 32, win ? 'VICTORY' : 'DEFEAT', {
+      fontFamily: 'Trebuchet MS', fontSize: '42px', fontStyle: 'bold',
       color: win ? '#ffd24a' : '#c23a3a', stroke: '#000', strokeThickness: 6,
     }).setOrigin(0.5);
-    const sub = this.add.text(0, 30,
-      win ? 'The warband is broken. Your band endures.  (Enter to play again)'
-          : (retreat ? 'Your band is routed — you fall back to safety.  (Enter)'
-                     : 'Your band has fallen.  (Enter to retry)'), {
-      fontFamily: 'Trebuchet MS', fontSize: '16px', color: UI.text,
-    }).setOrigin(0.5);
-    banner.add([bg, title, sub]);
+    banner.add([bg, title]);
+    lines.forEach((ln, i) => {
+      banner.add(this.add.text(0, -h / 2 + 66 + i * 22, ln, {
+        fontFamily: 'Trebuchet MS', fontSize: '15px',
+        color: i === lines.length - 1 ? '#9a9488' : UI.text,
+      }).setOrigin(0.5));
+    });
     banner.setScale(0.6); banner.setAlpha(0);
     this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut' });
-    this.overRetreat = retreat;    // consumed by confirm()
   }
 }
