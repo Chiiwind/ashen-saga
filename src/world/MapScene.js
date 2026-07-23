@@ -23,6 +23,8 @@ export default class MapScene extends Phaser.Scene {
     this.moving = false;
     this.face = { x: 0, y: 1 };
     this.dialogue = null;
+    this._leaving = false;    // reset every (re)entry, or movement stays frozen
+                             // after returning from a battle/town on the reused scene instance
 
     // UI first — build() may call flashBanner()/hint()
     this.buildDialogueUI();
