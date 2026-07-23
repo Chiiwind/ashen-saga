@@ -8,8 +8,8 @@ _shot*.png
 _preview.png
 
 # asset sheets kept locally for evaluation until upstream licence is confirmed
-# (dungeon.* is 0x72 CC0 and IS committed — see assets/CREDITS.md)
-assets/npc.*
+# (dungeon.* = 0x72 CC0 and npc.* = superdark free-for-commercial ARE committed —
+#  see assets/CREDITS.md)
 assets/village.*
 assets/bonfire.*
 assets/weapon_slash.*

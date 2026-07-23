@@ -5,6 +5,12 @@ Animated characters, monsters, weapons, and dungeon tiles.
 - Author: **0x72** — https://0x72.itch.io/dungeontileset-ii
 - License: **Creative Commons Zero (CC0 1.0 Universal)** — public domain, no attribution required (credited here as courtesy).
 
+## superdark — "16×16 Free NPC pack"  (`npc.png` / `npc.json`)
+Animated townsfolk used on the overworld/town (player avatar + NPCs).
+- Author: **superdark** — https://superdark.itch.io/16x16-free-npc-pack
+- License: **free for use in free and commercial projects, modification allowed,
+  attribution optional** (credited here as thanks).
+
 ## Pre-sliced atlases via `mitallast/roguelike-dungeon`
 The Phaser-ready `*.png` + `*.json` atlas pairs in this folder were obtained from
 the open-source project **roguelike-dungeon** by Alexey Korchevsky, which repacked
@@ -12,9 +18,10 @@ the above CC0 art into texture atlases.
 - Source: https://github.com/mitallast/roguelike-dungeon
 - License: **MIT** © 2020 Alexey Korchevsky (see below).
 
-Files used by the game: `dungeon.*` (0x72, CC0). Other sheets in this folder
-(`npc.*`, `village.*`, `bonfire.*`, `weapon_slash.*`) are kept for evaluation and
-will only be shipped after their upstream source/licence is individually confirmed.
+Files used by the game: `dungeon.*` (0x72, CC0 — battle) and `npc.*` (superdark,
+free-for-commercial — overworld/town). Other sheets (`village.*`, `bonfire.*`,
+`weapon_slash.*`) are kept locally for evaluation and are NOT committed, since
+their upstream source/licence isn't individually confirmed.
 
 ---
 

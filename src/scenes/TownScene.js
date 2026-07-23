@@ -28,7 +28,7 @@ export default class TownScene extends MapScene {
 
     // --- NPCs ------------------------------------------------
     this.addNpc({
-      tx: 5, ty: 6, tex: 'innkeeper', name: 'Innkeeper Bertwald',
+      tx: 5, ty: 6, char: 'butcher', name: 'Innkeeper Bertwald',
       onInteract: () => this.showDialogue('Innkeeper Bertwald', [
         'Weary from the road? Sit by the fire a while.',
         'Ale\'s watered and the stew\'s thin, but the roof holds.',
@@ -36,14 +36,14 @@ export default class TownScene extends MapScene {
       ]),
     });
     this.addNpc({
-      tx: 20, ty: 6, tex: 'merchant', name: 'Pedlar Rosa',
+      tx: 20, ty: 6, char: 'merchant', name: 'Pedlar Rosa',
       lines: [
         'Blades? Charms? Alas — my cart was picked clean by goblins.',
         'Come back when I\'ve wares again, friend.',
       ],
     });
     this.addNpc({
-      tx: 13, ty: 14, tex: 'guard', name: 'Watchman Corin',
+      tx: 13, ty: 14, char: 'knight', name: 'Watchman Corin',
       lines: [
         'The Ash Road\'s no place to wander alone these days.',
         'A warband gathers north of the bridge — a Chaos Marauder leads it.',
@@ -51,11 +51,11 @@ export default class TownScene extends MapScene {
       ],
     });
     this.addNpc({
-      tx: 9, ty: 11, tex: 'villager', name: 'Villager', wander: true,
+      tx: 9, ty: 11, char: 'townsfolk_m', name: 'Villager', wander: true,
       lines: ['Bless me, a real adventurer! We\'ve prayed for one.'],
     });
     this.addNpc({
-      tx: 17, ty: 10, tex: 'villager', name: 'Old Hedda', wander: true,
+      tx: 17, ty: 10, char: 'townsfolk_f', name: 'Old Hedda', wander: true,
       lines: ['In my day the Wilds were quiet. Now? Only the brave walk them.'],
     });
 

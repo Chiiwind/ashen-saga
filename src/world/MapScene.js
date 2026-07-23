@@ -7,8 +7,11 @@
 // ============================================================
 import { TILE, T, WALKABLE, drawTile } from './tiles.js';
 import { buildWorldTextures } from './worldSprites.js';
+import { world } from './state.js';
+import { CLASS_MAP_CHAR } from './mapChars.js';
 
-const STEP_MS = 140;
+const STEP_MS = 150;
+const MAP_SCALE = 1.4;           // 32px atlas frames -> map size
 
 export default class MapScene extends Phaser.Scene {
   create(data) {
@@ -64,17 +67,26 @@ export default class MapScene extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(0);
   }
 
+  leaderChar() {
+    const lead = world.party && world.party[0];
+    return (lead && CLASS_MAP_CHAR[lead.classId]) || 'knight';
+  }
+
   spawnPlayer(tx, ty) {
-    const s = this.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2, 'w_hero')
-      .setDepth(10).setScale(1.15);
-    this.player = { tx, ty, sprite: s };
+    const char = this.leaderChar();
+    const s = this.add.sprite(tx * TILE + TILE / 2, ty * TILE + TILE / 2, 'npc')
+      .setDepth(10).setOrigin(0.5, 0.72).setScale(MAP_SCALE);
+    if (this.anims.exists(char + '_idle')) s.play(char + '_idle');
+    this.player = { tx, ty, sprite: s, char };
     return this.player;
   }
 
-  addNpc({ tx, ty, tex, name, lines, onInteract, wander }) {
-    const s = this.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2, 'w_' + tex)
-      .setDepth(9).setScale(1.1);
-    const npc = { tx, ty, sprite: s, name, lines, onInteract, wander, homeX: tx, homeY: ty };
+  addNpc({ tx, ty, char, name, lines, onInteract, wander }) {
+    const c = char || 'townsfolk_m';
+    const s = this.add.sprite(tx * TILE + TILE / 2, ty * TILE + TILE / 2, 'npc')
+      .setDepth(9).setOrigin(0.5, 0.72).setScale(MAP_SCALE);
+    if (this.anims.exists(c + '_idle')) s.play(c + '_idle');
+    const npc = { tx, ty, sprite: s, char: c, name, lines, onInteract, wander, homeX: tx, homeY: ty };
     this.npcs.push(npc);
     if (wander) this.startWander(npc);
     return npc;
@@ -116,7 +128,6 @@ export default class MapScene extends Phaser.Scene {
       duration: STEP_MS, ease: 'Linear',
       onComplete: () => { this.moving = false; this.fireTrigger(nx, ny); },
     });
-    this.tweens.add({ targets: p.sprite, scaleY: 1.22, duration: STEP_MS / 2, yoyo: true });
   }
 
   fireTrigger(x, y) {
@@ -152,7 +163,11 @@ export default class MapScene extends Phaser.Scene {
             && !(this.player.tx === nx && this.player.ty === ny)) {
           if (dx < 0) npc.sprite.setFlipX(true); else if (dx > 0) npc.sprite.setFlipX(false);
           npc.tx = nx; npc.ty = ny;
-          this.tweens.add({ targets: npc.sprite, x: nx * TILE + TILE / 2, y: ny * TILE + TILE / 2, duration: 320 });
+          if (this.anims.exists(npc.char + '_run')) npc.sprite.play(npc.char + '_run', true);
+          this.tweens.add({
+            targets: npc.sprite, x: nx * TILE + TILE / 2, y: ny * TILE + TILE / 2, duration: 320,
+            onComplete: () => { if (npc.sprite.active && this.anims.exists(npc.char + '_idle')) npc.sprite.play(npc.char + '_idle', true); },
+          });
         }
       }
       this.time.delayedCall(Phaser.Math.Between(900, 2200), tick);
@@ -241,11 +256,23 @@ export default class MapScene extends Phaser.Scene {
   }
 
   update() {
+    if (this.player && this.player.char) this.updatePlayerAnim();
     if (this.moving || this.dialogue || this._leaving) return;
     const c = this.cursors, w = this.wasd;
     if (c.left.isDown || w.A.isDown) this.tryMove(-1, 0);
     else if (c.right.isDown || w.D.isDown) this.tryMove(1, 0);
     else if (c.up.isDown || w.W.isDown) this.tryMove(0, -1);
     else if (c.down.isDown || w.S.isDown) this.tryMove(0, 1);
+  }
+
+  // play walk while moving/holding a direction, idle otherwise
+  updatePlayerAnim() {
+    const c = this.cursors, w = this.wasd;
+    const held = c.left.isDown || c.right.isDown || c.up.isDown || c.down.isDown ||
+                 w.A.isDown || w.D.isDown || w.W.isDown || w.S.isDown;
+    const run = (this.moving || held) && !this.dialogue && !this._leaving;
+    const key = this.player.char + (run ? '_run' : '_idle');
+    const cur = this.player.sprite.anims.currentAnim;
+    if ((!cur || cur.key !== key) && this.anims.exists(key)) this.player.sprite.play(key, true);
   }
 }
