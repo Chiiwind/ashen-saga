@@ -125,7 +125,7 @@ export function toBattleHero(c) {
   const s = derivedStats(c);
   return {
     id: c.uid, name: c.name, title: CLASSES[c.classId].name,
-    sprite: CLASSES[c.classId].sprite,
+    sprite: CLASSES[c.classId].sprite, atlas: CLASSES[c.classId].atlas,
     maxHp: s.maxHp, maxMp: s.maxMp,
     atk: s.atk, def: s.def, mag: s.mag, res: s.res, speed: s.speed,
     hp: Math.min(c.hp, s.maxHp), mp: Math.min(c.mp, s.maxMp),

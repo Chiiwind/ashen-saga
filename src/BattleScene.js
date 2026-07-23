@@ -14,6 +14,8 @@ const BUFF_KEY = { atk: 'atkBuff', def: 'defBuff', mag: 'magBuff', res: 'resBuff
 
 const GW = 960, GH = 540;
 const ATB_RATE = 2.6;            // gauge units per (speed * second)
+const SPRITE_SCALE = 3.0;        // 16x16 atlas art → battle size
+const SPRITE_ORIGIN_Y = 0.72;    // anchor near the feet
 const UI = {
   gold: 0x9a844a, panel: 0x0e0e16, panelA: 0.92,
   text: '#e8e0d0', dim: '#9a9488', hi: 0x2c2c46,
@@ -144,16 +146,19 @@ export default class BattleScene extends Phaser.Scene {
       alive: true, ready: false, order: 0,
       atkBuff: 1, defBuff: 1, magBuff: 1, resBuff: 1, spdBuff: 1,
     };
-    const spr = this.add.image(slot.x, slot.y, 'unit_' + d.sprite).setDepth(10);
-    if (side === 'hero') spr.setFlipX(true);        // party faces left
-    spr.setScale(d.boss ? 1.55 : 1.15);
+    const scale = d.boss ? SPRITE_SCALE * 1.3 : SPRITE_SCALE;
+    const spr = this.add.sprite(slot.x, slot.y, 'dungeon').setDepth(10);
+    spr.setOrigin(0.5, SPRITE_ORIGIN_Y).setScale(scale);
+    if (d.atlas && this.anims.exists(d.atlas + '_idle')) spr.play(d.atlas + '_idle');
+    if (side === 'hero') spr.setFlipX(true);         // party faces left toward the foe
     c.sprite = spr;
+    c.atlasKey = d.atlas;
     c.homeX = slot.x;
     c.homeY = slot.y;
-    c.barOff = d.boss ? 72 : 50;                     // ui offset above sprite
+    c.barOff = spr.displayHeight * SPRITE_ORIGIN_Y + 8;   // ui offset above the sprite
     // floating name for enemies (helps targeting)
     if (side === 'enemy') {
-      c.tag = this.add.text(slot.x, slot.y - (d.boss ? 82 : 56), d.name, {
+      c.tag = this.add.text(slot.x, slot.y - c.barOff - 6, d.name, {
         fontFamily: 'Trebuchet MS', fontSize: d.boss ? '15px' : '13px',
         color: d.boss ? '#ff8a6a' : UI.dim, stroke: '#000', strokeThickness: 3,
       }).setOrigin(0.5).setDepth(11);
@@ -490,8 +495,10 @@ export default class BattleScene extends Phaser.Scene {
     } else {
       this.tweens.add({
         targets: actor.sprite,
-        x: primary.sprite.x - dir * 46, y: primary.sprite.y, duration: 200,
+        x: primary.sprite.x - dir * 52, y: primary.sprite.y, duration: 200,
         yoyo: true, hold: 40, ease: 'Quad.easeOut', onYoyo: strike,
+        onStart: () => { if (actor.atlasKey) actor.sprite.play(actor.atlasKey + '_run', true); },
+        onComplete: () => { if (actor.atlasKey && actor.alive) actor.sprite.play(actor.atlasKey + '_idle', true); },
       });
     }
   }
@@ -608,6 +615,7 @@ export default class BattleScene extends Phaser.Scene {
 
   killUnit(unit) {
     unit.alive = false; unit.ready = false;
+    if (unit.sprite.anims) unit.sprite.anims.stop();
     if (unit.side === 'enemy') {
       this.earnedExp += unit.exp || 0;
       this.earnedAp += unit.ap || 0;

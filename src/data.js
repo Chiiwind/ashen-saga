@@ -107,15 +107,15 @@ export const HEROES = [
 // --- Enemy templates ---------------------------------------
 // exp/ap are awarded to the party per enemy defeated.
 const ENEMIES = {
-  goblin:  { name: 'Goblin Raider', sprite: 'goblin',
+  goblin:  { name: 'Goblin Raider', sprite: 'goblin', atlas: 'goblin',
     maxHp: 62, maxMp: 0, atk: 20, def: 10, mag: 8, res: 8, speed: 9,  skills: ['gobStab'], exp: 9, ap: 2 },
-  shaman:  { name: 'Night Shaman', sprite: 'shaman',
+  shaman:  { name: 'Night Shaman', sprite: 'shaman', atlas: 'necromancer',
     maxHp: 56, maxMp: 30, atk: 12, def: 8, mag: 22, res: 14, speed: 8, skills: ['hex'], exp: 12, ap: 3 },
-  brute:   { name: 'Orc Brute', sprite: 'brute',
+  brute:   { name: 'Orc Brute', sprite: 'brute', atlas: 'ogre',
     maxHp: 150, maxMp: 0, atk: 30, def: 16, mag: 4, res: 8, speed: 6, skills: ['brutalClub', 'gobStab'], exp: 26, ap: 5 },
-  beastman:{ name: 'Beastman Gor', sprite: 'beastman',
+  beastman:{ name: 'Beastman Gor', sprite: 'beastman', atlas: 'chort',
     maxHp: 92, maxMp: 0, atk: 27, def: 12, mag: 6, res: 8, speed: 9, skills: ['gore', 'gobStab'], exp: 18, ap: 4 },
-  marauder:{ name: 'Chaos Marauder', sprite: 'marauder', boss: true,
+  marauder:{ name: 'Chaos Marauder', sprite: 'marauder', atlas: 'big_demon', boss: true,
     maxHp: 420, maxMp: 30, atk: 36, def: 22, mag: 20, res: 18, speed: 8, skills: ['cleave', 'darkBolt', 'brutalClub'], exp: 90, ap: 22 },
 };
 

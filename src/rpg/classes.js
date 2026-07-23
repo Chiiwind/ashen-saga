@@ -20,7 +20,7 @@ const A = (id, ability, name, ap, col, row, req, root) =>
 
 export const CLASSES = {
   greatsword: {
-    id: 'greatsword', name: 'Greatsword', role: 'Frontline warrior', sprite: 'warrior',
+    id: 'greatsword', name: 'Greatsword', role: 'Frontline warrior', sprite: 'warrior', atlas: 'knight_m',
     blurb: 'A hulking soldier in heavy plate. Soaks blows and hits like a falling wall.',
     base:   { maxHp: 168, maxMp: 20, atk: 30, def: 24, mag: 8,  res: 14, speed: 8 },
     growth: { maxHp: 15,  maxMp: 2,  atk: 3.2, def: 2.6, mag: 0.4, res: 1.1, speed: 0.3 },
@@ -37,7 +37,7 @@ export const CLASSES = {
     ],
   },
   priest: {
-    id: 'priest', name: 'Warrior Priest', role: 'Holy hybrid', sprite: 'priest',
+    id: 'priest', name: 'Warrior Priest', role: 'Holy hybrid', sprite: 'priest', atlas: 'knight_f',
     blurb: 'Faith and a heavy mace. Mends the band and smites the unclean.',
     base:   { maxHp: 144, maxMp: 44, atk: 24, def: 20, mag: 26, res: 20, speed: 8 },
     growth: { maxHp: 12,  maxMp: 4,  atk: 2, def: 2, mag: 2.4, res: 1.6, speed: 0.4 },
@@ -54,7 +54,7 @@ export const CLASSES = {
     ],
   },
   brightWizard: {
-    id: 'brightWizard', name: 'Bright Wizard', role: 'Fire mage', sprite: 'wizard',
+    id: 'brightWizard', name: 'Bright Wizard', role: 'Fire mage', sprite: 'wizard', atlas: 'wizard_m',
     blurb: 'Wields the Lore of Fire. Glass-brittle, but burns everything to ash.',
     base:   { maxHp: 94, maxMp: 74, atk: 14, def: 12, mag: 40, res: 24, speed: 11 },
     growth: { maxHp: 7,  maxMp: 6,  atk: 1, def: 1, mag: 4, res: 2, speed: 0.5 },
@@ -70,7 +70,7 @@ export const CLASSES = {
     ],
   },
   slayer: {
-    id: 'slayer', name: 'Dwarf Slayer', role: 'Berserker', sprite: 'slayer',
+    id: 'slayer', name: 'Dwarf Slayer', role: 'Berserker', sprite: 'slayer', atlas: 'lizard_m',
     blurb: 'A death-seeking dwarf, axes bared. Trades his own blood for carnage.',
     base:   { maxHp: 148, maxMp: 20, atk: 38, def: 16, mag: 6, res: 10, speed: 10 },
     growth: { maxHp: 13,  maxMp: 1,  atk: 3.6, def: 1.5, mag: 0.3, res: 1, speed: 0.4 },
@@ -86,7 +86,7 @@ export const CLASSES = {
     ],
   },
   waywatcher: {
-    id: 'waywatcher', name: 'Waywatcher', role: 'Elf archer', sprite: 'archer',
+    id: 'waywatcher', name: 'Waywatcher', role: 'Elf archer', sprite: 'archer', atlas: 'elf_m',
     blurb: 'A silent elf marksman. Strikes first, strikes true, from afar.',
     base:   { maxHp: 110, maxMp: 40, atk: 30, def: 14, mag: 16, res: 16, speed: 13 },
     growth: { maxHp: 9,  maxMp: 3,  atk: 3, def: 1.2, mag: 1.5, res: 1.2, speed: 0.6 },
@@ -102,7 +102,7 @@ export const CLASSES = {
     ],
   },
   witchHunter: {
-    id: 'witchHunter', name: 'Witch Hunter', role: 'Zealot duellist', sprite: 'hunter',
+    id: 'witchHunter', name: 'Witch Hunter', role: 'Zealot duellist', sprite: 'hunter', atlas: 'lizard_f',
     blurb: 'Pistol and silvered blade. Hunts the witch, the mutant, the damned.',
     base:   { maxHp: 122, maxMp: 36, atk: 28, def: 18, mag: 18, res: 18, speed: 11 },
     growth: { maxHp: 10,  maxMp: 3,  atk: 2.8, def: 1.6, mag: 1.6, res: 1.4, speed: 0.5 },
@@ -118,7 +118,7 @@ export const CLASSES = {
     ],
   },
   greyWizard: {
-    id: 'greyWizard', name: 'Grey Wizard', role: 'Debuffer', sprite: 'greywiz',
+    id: 'greyWizard', name: 'Grey Wizard', role: 'Debuffer', sprite: 'greywiz', atlas: 'wizard_f',
     blurb: 'Master of the Grey Wind. Unmakes a foe before it can raise a blade.',
     base:   { maxHp: 98, maxMp: 70, atk: 14, def: 13, mag: 36, res: 26, speed: 10 },
     growth: { maxHp: 7,  maxMp: 5.5, atk: 1, def: 1, mag: 3.6, res: 2.2, speed: 0.5 },
@@ -134,7 +134,7 @@ export const CLASSES = {
     ],
   },
   physician: {
-    id: 'physician', name: 'Halfling Physician', role: 'Support', sprite: 'physician',
+    id: 'physician', name: 'Halfling Physician', role: 'Support', sprite: 'physician', atlas: 'elf_f',
     blurb: 'A halfling field-surgeon with a satchel of tonics, bombs, and cheer.',
     base:   { maxHp: 104, maxMp: 60, atk: 16, def: 14, mag: 28, res: 20, speed: 12 },
     growth: { maxHp: 8,  maxMp: 5,  atk: 1.4, def: 1.2, mag: 2.6, res: 1.6, speed: 0.6 },

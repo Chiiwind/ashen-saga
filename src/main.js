@@ -4,6 +4,7 @@
 import BattleScene from './BattleScene.js';
 import OverworldScene from './scenes/OverworldScene.js';
 import TownScene from './scenes/TownScene.js';
+import PreloadScene from './scenes/PreloadScene.js';
 import PartyCreateScene from './scenes/PartyCreateScene.js';
 import PartyMenuScene from './scenes/PartyMenuScene.js';
 
@@ -21,7 +22,7 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [PartyCreateScene, OverworldScene, TownScene, BattleScene, PartyMenuScene],
+  scene: [PreloadScene, PartyCreateScene, OverworldScene, TownScene, BattleScene, PartyMenuScene],
 };
 
 window.__GAME = new Phaser.Game(config);
