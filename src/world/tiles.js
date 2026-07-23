@@ -31,6 +31,8 @@ export const TILE_FRAMES = {
   [T.MTN]: F(2, 5),
   [T.BRIDGE]: F(10, 31),
   [T.FLOWERS]: F(2, 0),
+  [T.COBBLE]: F(1, 1),   // town ground = grass (village green)
+  [T.EXIT]: F(5, 1),     // town gate = dirt path out
 };
 // these draw a grass tile underneath (transparent overlays)
 export const TILE_UNDERLAY = new Set([T.TREE, T.MTN]);

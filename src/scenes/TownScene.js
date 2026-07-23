@@ -13,6 +13,7 @@ export default class TownScene extends MapScene {
   constructor() { super('town'); }
 
   build() {
+    this.tileset = 'punyworld';           // tileset ground; buildings stay procedural
     const grid = this.makeMap();
     this.renderGround(grid);
 
