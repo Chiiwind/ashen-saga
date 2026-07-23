@@ -39,19 +39,26 @@ export default class TownScene extends MapScene {
     });
     this.addNpc({
       tx: 13, ty: 14, char: 'knight', name: 'Watchman Corin',
-      lines: [
-        'The Ash Road\'s no place to wander alone these days.',
-        'A warband gathers north of the bridge — a Chaos Marauder leads it.',
-        'Cut down the stragglers first, then break the brute.',
-      ],
+      lines: () => world.defeatedFoes.has('grukk')
+        ? [
+            'Grukk\'s dead? By the Ash — you\'ve saved us all.',
+            'The green tide is scattering already. Aldenmoor owes you a debt it can never pay.',
+            'Rest here as long as you like, warden.',
+          ]
+        : [
+            'You\'re the wardens the village sent for. Thank the Ash you\'ve come.',
+            'The greenskins boil up out of the old Ashmoor Mine, north past the bridge.',
+            'Their warboss — GRUKK SKULLSPLITTER — squats at the bottom of it, whipping the horde to a Waaagh!.',
+            'Cut through his mobs to climb the mine, then put Grukk down. Buy gear from Rosa and rest at the inn before you go.',
+          ],
     });
     this.addNpc({
       tx: 9, ty: 11, char: 'townsfolk_m', name: 'Villager', wander: true,
-      lines: ['Bless me, a real adventurer! We\'ve prayed for one.'],
+      lines: ['Bless me, real wardens! We\'ve prayed for someone to face the mine.'],
     });
     this.addNpc({
       tx: 17, ty: 10, char: 'townsfolk_f', name: 'Old Hedda', wander: true,
-      lines: ['In my day the Wilds were quiet. Now? Only the brave walk them.'],
+      lines: ['That mine was worked out years ago. Now only goblins dig there — and worse.'],
     });
 
     this.hint('Arrows/WASD: move    Space: talk    Step on the gate to leave');

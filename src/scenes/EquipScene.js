@@ -23,6 +23,8 @@ function modsStr(it) {
 export default class EquipScene extends Phaser.Scene {
   constructor() { super('equip'); }
 
+  init(data) { this.returnScene = (data && data.returnScene) || 'overworld'; }
+
   create() {
     this.party = world.party;
     this.active = 0;
@@ -121,7 +123,7 @@ export default class EquipScene extends Phaser.Scene {
     this.rebuild();
   }
 
-  close() { this.scene.resume('overworld'); this.scene.stop(); }
+  close() { this.scene.resume(this.returnScene); this.scene.stop(); }
 
   rebuild() {
     this.rows = this.buildRows();

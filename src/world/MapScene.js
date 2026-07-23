@@ -171,7 +171,7 @@ export default class MapScene extends Phaser.Scene {
     if (npc) {
       npc.sprite.setFlipX(this.face.x > 0);     // face the player
       if (npc.onInteract) npc.onInteract(npc);
-      else this.showDialogue(npc.name, npc.lines);
+      else this.showDialogue(npc.name, typeof npc.lines === 'function' ? npc.lines() : npc.lines);
     }
   }
 
@@ -273,6 +273,19 @@ export default class MapScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-SPACE', act);
     this.input.keyboard.on('keydown-ENTER', act);
     this.input.keyboard.on('keydown-Z', act);
+  }
+
+  // open sphere-grid (M) / equipment (I); they resume THIS scene on close
+  enableMenus() {
+    const here = this.sys.settings.key;
+    this.input.keyboard.on('keydown-M', () => {
+      if (this.dialogue || this._leaving || this.scene.isPaused()) return;
+      this.scene.pause(); this.scene.launch('partyMenu', { returnScene: here });
+    });
+    this.input.keyboard.on('keydown-I', () => {
+      if (this.dialogue || this._leaving || this.scene.isPaused()) return;
+      this.scene.pause(); this.scene.launch('equip', { returnScene: here });
+    });
   }
 
   gotoScene(key, data) {

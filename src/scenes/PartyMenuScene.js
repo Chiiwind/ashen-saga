@@ -26,6 +26,8 @@ const NY = n => n.y * SCALE;
 export default class PartyMenuScene extends Phaser.Scene {
   constructor() { super('partyMenu'); }
 
+  init(data) { this.returnScene = (data && data.returnScene) || 'overworld'; }
+
   create() {
     this.party = world.party;
     this.active = 0;
@@ -165,7 +167,7 @@ export default class PartyMenuScene extends Phaser.Scene {
     else Audio.sfx('cancel');
   }
 
-  close() { this.scene.resume('overworld'); this.scene.stop(); }
+  close() { this.scene.resume(this.returnScene); this.scene.stop(); }
 
   // ---- render ----------------------------------------------
   refresh() {

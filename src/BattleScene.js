@@ -763,6 +763,7 @@ export default class BattleScene extends Phaser.Scene {
     if (win) this.flashScreen(0xffe8a0, 0.35, 500);
 
     const fromMap = !!this.launch.returnTo;
+    const act1Win = win && this.launch.ending === 'act1';
     let events = [];
     if (win) {
       if (fromMap && this.launch.foeId) world.defeatedFoes.add(this.launch.foeId);
@@ -770,14 +771,16 @@ export default class BattleScene extends Phaser.Scene {
       world.gold += this.earnedGold;
       for (const id of this.droppedItems) world.inventory.push(id);
       events = grantRewards(world.party, this.earnedExp, this.earnedAp);
+      if (act1Win) { this.launch.returnTo = 'overworld'; world.playerTile = { x: 16, y: 4 }; }  // emerge from the mine
     } else {
       this.persistParty('full');                                  // routed → fall back, patched up
     }
-    this.endRoute = fromMap ? 'return' : 'restart';
+    this.endRoute = this.launch.returnTo ? 'return' : 'restart';
 
     // banner
     const lines = [];
     if (win) {
+      if (act1Win) { lines.push('Grukk Skullsplitter lies dead — the Waaagh! is broken.'); lines.push('Aldenmoor is saved.    ~ End of Act I ~'); lines.push(''); }
       const sLv = Math.max(2, Math.round(this.earnedAp / 5));
       lines.push(`+${this.earnedExp} EXP    +${sLv} S.Lv    +spheres    +${this.earnedGold} gold`);
       if (this.droppedItems.length) lines.push('Found: ' + this.droppedItems.map(id => itemById(id).name).join(', '));

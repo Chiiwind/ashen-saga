@@ -13,6 +13,7 @@ export const world = {
   spheres: freshSpheres(),
   unlockedNodes: new Set(),  // grid lock nodes opened (shared by whole party)
   playerTile: null,          // { x, y } where the hero stands on the overworld
+  dungeonTile: null,         // { x, y } position inside the current dungeon
   defeatedFoes: new Set(),   // ids of roaming foes already beaten
   visitedTown: false,
 };

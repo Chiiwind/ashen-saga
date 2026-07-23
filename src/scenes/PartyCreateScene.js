@@ -162,7 +162,7 @@ export default class PartyCreateScene extends Phaser.Scene {
       world.party = this.built;
       grantStartingStipend();
       this.cameras.main.fadeOut(300);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('overworld'));
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('intro'));
       return;
     }
     this.mode = 'class';

@@ -122,6 +122,13 @@ const ENEMIES = {
   marauder:{ name: 'Chaos Marauder', sprite: 'marauder', atlas: 'big_demon', boss: true,
     maxHp: 420, maxMp: 30, atk: 36, def: 22, mag: 20, res: 18, speed: 8, skills: ['cleave', 'darkBolt', 'brutalClub'], exp: 90, ap: 22, gold: 120,
     drops: [{ id: 'steel_longsword', chance: 0.6 }, { id: 'chainmail', chance: 0.5 }, { id: 'power_band', chance: 0.35 }, { id: 'eagle_eye', chance: 0.25 }] },
+  // greenskins — Act I
+  orc:     { name: 'Orc Grunt', sprite: 'brute', atlas: 'orc_warrior',
+    maxHp: 96, maxMp: 0, atk: 26, def: 14, mag: 4, res: 8, speed: 8, skills: ['gobStab', 'brutalClub'], exp: 16, ap: 4, gold: 14,
+    drops: [{ id: 'iron_axe', chance: 0.08 }, { id: 'leather_brigandine', chance: 0.06 }, { id: 'power_band', chance: 0.03 }] },
+  warboss: { name: 'Grukk Skullsplitter', sprite: 'marauder', atlas: 'masked_orc', boss: true,
+    maxHp: 560, maxMp: 0, atk: 40, def: 24, mag: 4, res: 12, speed: 8, skills: ['brutalClub', 'cleave', 'gore'], exp: 160, ap: 42, gold: 280,
+    drops: [{ id: 'steel_waraxe', chance: 0.8 }, { id: 'chainmail', chance: 0.7 }, { id: 'eagle_eye', chance: 0.5 }, { id: 'greater_vigor', chance: 0.4 }] },
 };
 
 function inst(key, i) {
@@ -141,3 +148,19 @@ export const ENCOUNTERS = [
 
 // legacy single-encounter helper (still used by any old callers)
 export function makeEncounter() { return ENCOUNTERS[0].enemies(); }
+
+// --- Act I encounters (world + Ashmoor Mine dungeon) -------
+export const ACT1 = {
+  goblinAmbush: { name: 'Goblin Ambush', intro: 'Goblins spring from the ash!',
+    enemies: () => [inst('goblin', 1), inst('goblin', 2), inst('goblin', 3)] },
+  orcPatrol: { name: 'Orc Patrol', intro: 'An orc patrol bars the road!',
+    enemies: () => [inst('orc', 1), inst('orc', 2), inst('goblin', 1), inst('goblin', 2)] },
+  mineMouth: { name: 'Mine Guards', intro: 'Greenskins guard the mine-mouth!',
+    enemies: () => [inst('orc', 1), inst('goblin', 1), inst('goblin', 2), inst('shaman', 1)] },
+  minePit: { name: 'Warren Pit', intro: 'The pit swarms with goblins!',
+    enemies: () => [inst('goblin', 1), inst('goblin', 2), inst('goblin', 3), inst('goblin', 4), inst('shaman', 1)] },
+  oreCavern: { name: 'Ore Cavern', intro: 'An orc mob lumbers from the dark!',
+    enemies: () => [inst('orc', 1), inst('orc', 2), inst('orc', 3), inst('brute', 1)] },
+  warboss: { name: 'Grukk Skullsplitter', intro: 'GRUKK: "Da \'umies come ta die! WAAAGH!!"',
+    enemies: () => [inst('warboss', 1), inst('orc', 1), inst('orc', 2)] },
+};
