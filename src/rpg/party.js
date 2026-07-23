@@ -7,6 +7,7 @@
 import { CLASSES } from './classes.js';
 import { GRID } from './spheregrid.js';
 import { world } from '../world/state.js';
+import { ITEMS, CLASS_EQUIP, CLASS_STARTER_GEAR, canClassUse } from './items.js';
 
 const STAT_KEYS = ['maxHp', 'maxMp', 'atk', 'def', 'mag', 'res', 'speed'];
 const MAX_LEVEL = 50;
@@ -23,8 +24,14 @@ export function makeCharacter(name, classId) {
     sLv: 0,                            // sphere levels = movement budget
     activated: [],                     // grid node ids this character has activated
     gridPos: GRID.classStart[classId], // token position
+    equipment: { weapon: null, armour: null, accessories: new Array(CLASS_EQUIP[classId].accSlots).fill(null) },
     hp: 0, mp: 0,
   };
+  for (const id of (CLASS_STARTER_GEAR[classId] || [])) {   // equip the starter kit
+    const it = ITEMS[id];
+    if (it && it.type === 'weapon') c.equipment.weapon = id;
+    else if (it && it.type === 'armour') c.equipment.armour = id;
+  }
   const s = derivedStats(c);
   c.hp = s.maxHp; c.mp = s.maxMp;
   return c;
@@ -39,8 +46,64 @@ export function derivedStats(c) {
     const n = GRID.byId[id];
     if (n && n.type === 'stat') out[n.stat] += n.amount;
   }
-  for (const k of STAT_KEYS) out[k] = Math.floor(out[k]);
+  // equipment stat mods
+  const eq = c.equipment;
+  if (eq) {
+    for (const id of [eq.weapon, eq.armour, ...(eq.accessories || [])]) {
+      const it = id && ITEMS[id];
+      if (it && it.mods) for (const k in it.mods) out[k] += it.mods[k];
+    }
+  }
+  for (const k of STAT_KEYS) out[k] = Math.max(1, Math.floor(out[k]));
   return out;
+}
+
+// combat effects from equipped weapon + accessories (crit chance, lifesteal)
+export function equipEffects(c) {
+  const out = { crit: 0, lifesteal: 0 };
+  const eq = c.equipment;
+  if (!eq) return out;
+  for (const id of [eq.weapon, ...(eq.accessories || [])]) {
+    const it = id && ITEMS[id];
+    if (it && it.effect) {
+      if (it.effect.crit) out.crit += it.effect.crit;
+      if (it.effect.lifesteal) out.lifesteal = Math.max(out.lifesteal, it.effect.lifesteal);
+    }
+  }
+  return out;
+}
+
+// ---- equip / unequip (moves between world.inventory and slots) ----
+function clampHpMp(c) { const s = derivedStats(c); if (c.hp > s.maxHp) c.hp = s.maxHp; if (c.mp > s.maxMp) c.mp = s.maxMp; }
+
+export function equipItem(c, itemId, accIndex) {
+  const it = ITEMS[itemId];
+  if (!it || !canClassUse(c.classId, it)) return false;
+  const inv = world.inventory;
+  const i = inv.indexOf(itemId);
+  if (i < 0) return false;
+  let prev = null;
+  if (it.type === 'weapon') { prev = c.equipment.weapon; c.equipment.weapon = itemId; }
+  else if (it.type === 'armour') { prev = c.equipment.armour; c.equipment.armour = itemId; }
+  else {
+    let idx = accIndex != null ? accIndex : c.equipment.accessories.indexOf(null);
+    if (idx < 0) idx = 0;
+    prev = c.equipment.accessories[idx]; c.equipment.accessories[idx] = itemId;
+  }
+  inv.splice(i, 1);
+  if (prev) inv.push(prev);
+  clampHpMp(c);
+  return true;
+}
+
+export function unequip(c, slot, accIndex) {
+  let id = null;
+  if (slot === 'weapon') { id = c.equipment.weapon; c.equipment.weapon = null; }
+  else if (slot === 'armour') { id = c.equipment.armour; c.equipment.armour = null; }
+  else if (slot === 'accessory') { id = c.equipment.accessories[accIndex]; c.equipment.accessories[accIndex] = null; }
+  if (id) world.inventory.push(id);
+  clampHpMp(c);
+  return !!id;
 }
 
 export function knownAbilities(c) {
@@ -147,12 +210,14 @@ export function grantRewards(party, exp, ap) {
 // ---- battle bridge ---------------------------------------
 export function toBattleHero(c) {
   const s = derivedStats(c);
+  const eff = equipEffects(c);
   return {
     id: c.uid, name: c.name, title: CLASSES[c.classId].name,
     sprite: CLASSES[c.classId].sprite, atlas: CLASSES[c.classId].atlas,
     maxHp: s.maxHp, maxMp: s.maxMp,
     atk: s.atk, def: s.def, mag: s.mag, res: s.res, speed: s.speed,
     hp: Math.min(c.hp, s.maxHp), mp: Math.min(c.mp, s.maxMp),
+    critBonus: eff.crit, lifesteal: eff.lifesteal,
     commands: battleCommands(c),
     charRef: c,
   };

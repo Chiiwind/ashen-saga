@@ -108,15 +108,20 @@ export const HEROES = [
 // exp/ap are awarded to the party per enemy defeated.
 const ENEMIES = {
   goblin:  { name: 'Goblin Raider', sprite: 'goblin', atlas: 'goblin',
-    maxHp: 62, maxMp: 0, atk: 20, def: 10, mag: 8, res: 8, speed: 9,  skills: ['gobStab'], exp: 9, ap: 2, gold: 8 },
+    maxHp: 62, maxMp: 0, atk: 20, def: 10, mag: 8, res: 8, speed: 9,  skills: ['gobStab'], exp: 9, ap: 2, gold: 8,
+    drops: [{ id: 'iron_dagger', chance: 0.06 }, { id: 'ring_vigor', chance: 0.03 }] },
   shaman:  { name: 'Night Shaman', sprite: 'shaman', atlas: 'necromancer',
-    maxHp: 56, maxMp: 30, atk: 12, def: 8, mag: 22, res: 14, speed: 8, skills: ['hex'], exp: 12, ap: 3, gold: 11 },
+    maxHp: 56, maxMp: 30, atk: 12, def: 8, mag: 22, res: 14, speed: 8, skills: ['hex'], exp: 12, ap: 3, gold: 11,
+    drops: [{ id: 'ash_staff', chance: 0.06 }, { id: 'ring_focus', chance: 0.04 }] },
   brute:   { name: 'Orc Brute', sprite: 'brute', atlas: 'ogre',
-    maxHp: 150, maxMp: 0, atk: 30, def: 16, mag: 4, res: 8, speed: 6, skills: ['brutalClub', 'gobStab'], exp: 26, ap: 5, gold: 24 },
+    maxHp: 150, maxMp: 0, atk: 30, def: 16, mag: 4, res: 8, speed: 6, skills: ['brutalClub', 'gobStab'], exp: 26, ap: 5, gold: 24,
+    drops: [{ id: 'iron_axe', chance: 0.1 }, { id: 'iron_plate', chance: 0.06 }, { id: 'ring_vigor', chance: 0.05 }] },
   beastman:{ name: 'Beastman Gor', sprite: 'beastman', atlas: 'chort',
-    maxHp: 92, maxMp: 0, atk: 27, def: 12, mag: 6, res: 8, speed: 9, skills: ['gore', 'gobStab'], exp: 18, ap: 4, gold: 16 },
+    maxHp: 92, maxMp: 0, atk: 27, def: 12, mag: 6, res: 8, speed: 9, skills: ['gore', 'gobStab'], exp: 18, ap: 4, gold: 16,
+    drops: [{ id: 'iron_sword', chance: 0.08 }, { id: 'leather_brigandine', chance: 0.06 }] },
   marauder:{ name: 'Chaos Marauder', sprite: 'marauder', atlas: 'big_demon', boss: true,
-    maxHp: 420, maxMp: 30, atk: 36, def: 22, mag: 20, res: 18, speed: 8, skills: ['cleave', 'darkBolt', 'brutalClub'], exp: 90, ap: 22, gold: 120 },
+    maxHp: 420, maxMp: 30, atk: 36, def: 22, mag: 20, res: 18, speed: 8, skills: ['cleave', 'darkBolt', 'brutalClub'], exp: 90, ap: 22, gold: 120,
+    drops: [{ id: 'steel_longsword', chance: 0.6 }, { id: 'chainmail', chance: 0.5 }, { id: 'power_band', chance: 0.35 }, { id: 'eagle_eye', chance: 0.25 }] },
 };
 
 function inst(key, i) {

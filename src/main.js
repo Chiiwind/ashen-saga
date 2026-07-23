@@ -8,6 +8,8 @@ import PreloadScene from './scenes/PreloadScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import PartyCreateScene from './scenes/PartyCreateScene.js';
 import PartyMenuScene from './scenes/PartyMenuScene.js';
+import EquipScene from './scenes/EquipScene.js';
+import ShopScene from './scenes/ShopScene.js';
 
 const config = {
   type: Phaser.CANVAS,   // Canvas renderer displays reliably in the preview pane (WebGL can blank out)
@@ -23,7 +25,7 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [PreloadScene, TitleScene, PartyCreateScene, OverworldScene, TownScene, BattleScene, PartyMenuScene],
+  scene: [PreloadScene, TitleScene, PartyCreateScene, OverworldScene, TownScene, BattleScene, PartyMenuScene, EquipScene, ShopScene],
 };
 
 window.__GAME = new Phaser.Game(config);

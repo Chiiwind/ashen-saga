@@ -8,6 +8,7 @@ import { buildUnitTextures } from './sprites.js';
 import Audio from './audio.js';
 import { world } from './world/state.js';
 import { ensureParty, toBattleHero, grantRewards } from './rpg/party.js';
+import { itemById } from './rpg/items.js';
 
 // map a stat to its runtime buff-multiplier key on a combatant
 const BUFF_KEY = { atk: 'atkBuff', def: 'defBuff', mag: 'magBuff', res: 'resBuff', speed: 'spdBuff' };
@@ -61,6 +62,7 @@ export default class BattleScene extends Phaser.Scene {
     this.earnedExp = 0;
     this.earnedAp = 0;
     this.earnedGold = 0;
+    this.droppedItems = [];
     this.spawnEnemies(this.encList[0].enemies());
 
     // --- audio ----------------------------------------------
@@ -519,7 +521,8 @@ export default class BattleScene extends Phaser.Scene {
     const defS = isMagic ? target.res * target.resBuff : target.def * target.defBuff;
     const raw = Math.max(1, atkS * ab.power - defS * 0.6);
     let dmg = Math.round(raw * Phaser.Math.FloatBetween(0.85, 1.15));
-    const crit = ab.crit && Math.random() < ab.crit;
+    const critChance = (ab.crit || 0) + (isMagic ? 0 : (actor.critBonus || 0));  // gear adds crit to physical
+    const crit = critChance > 0 && Math.random() < critChance;
     if (crit) dmg = Math.round(dmg * 1.8);
     target.hp = Math.max(0, target.hp - dmg);
     this.spawnText(tx, ty - 28, (crit ? '' + dmg + '!' : '' + dmg), crit ? '#ffd24a' : '#ffffff');
@@ -528,9 +531,10 @@ export default class BattleScene extends Phaser.Scene {
       { speed: isMagic ? 150 : 180, lifespan: isMagic ? 550 : 380, scale: 0.55 });
     this.cameras.main.shake(dmg > 40 ? 200 : 120, dmg > 40 ? 0.010 : 0.006);
     if (dmg > 40 || crit) this.flashScreen(0xffffff, 0.22, 160);
-    // life drain — heal the caster for a fraction
-    if (ab.drain) {
-      const back = Math.max(1, Math.round(dmg * ab.drain));
+    // life drain (ability) or lifesteal (equipment) — heal the attacker
+    const steal = (ab.drain || 0) + (!ab.heal ? (actor.lifesteal || 0) : 0);
+    if (steal) {
+      const back = Math.max(1, Math.round(dmg * steal));
       actor.hp = Math.min(actor.maxHp, actor.hp + back);
       this.spawnText(actor.sprite.x, actor.sprite.y - 40, '+' + back, '#8dff8a');
     }
@@ -621,6 +625,7 @@ export default class BattleScene extends Phaser.Scene {
       this.earnedExp += unit.exp || 0;
       this.earnedAp += unit.ap || 0;
       this.earnedGold += unit.gold || 0;
+      for (const d of (unit.drops || [])) if (Math.random() < d.chance) this.droppedItems.push(d.id);
     }
     Audio.sfx('ko');
     this.tweens.add({ targets: unit.sprite, alpha: 0.12, angle: unit.side === 'hero' ? -90 : 90, y: unit.sprite.y + 14, duration: 500 });
@@ -763,6 +768,7 @@ export default class BattleScene extends Phaser.Scene {
       if (fromMap && this.launch.foeId) world.defeatedFoes.add(this.launch.foeId);
       this.persistParty('keep');                                  // carry wounds
       world.gold += this.earnedGold;
+      for (const id of this.droppedItems) world.inventory.push(id);
       events = grantRewards(world.party, this.earnedExp, this.earnedAp);
     } else {
       this.persistParty('full');                                  // routed → fall back, patched up
@@ -774,6 +780,7 @@ export default class BattleScene extends Phaser.Scene {
     if (win) {
       const sLv = Math.max(2, Math.round(this.earnedAp / 5));
       lines.push(`+${this.earnedExp} EXP    +${sLv} S.Lv    +spheres    +${this.earnedGold} gold`);
+      if (this.droppedItems.length) lines.push('Found: ' + this.droppedItems.map(id => itemById(id).name).join(', '));
       for (const e of events) lines.push(`${e.name} reached Lv ${e.level}!`);
       lines.push(this.endRoute === 'return' ? 'Enter to continue' : 'Enter to play again');
     } else {

@@ -35,10 +35,7 @@ export default class TownScene extends MapScene {
     });
     this.addNpc({
       tx: 20, ty: 6, char: 'merchant', name: 'Pedlar Rosa',
-      lines: [
-        'Blades? Charms? Alas — my cart was picked clean by goblins.',
-        'Come back when I\'ve wares again, friend.',
-      ],
+      onInteract: () => { this.scene.pause(); this.scene.launch('shop', { returnScene: 'town' }); },
     });
     this.addNpc({
       tx: 13, ty: 14, char: 'knight', name: 'Watchman Corin',

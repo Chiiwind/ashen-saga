@@ -8,6 +8,7 @@ const freshSpheres = () => ({ power: 0, mana: 0, speed: 0, ability: 0, fortune: 
 export const world = {
   party: [],                 // the 5 chosen characters (see rpg/party.js)
   gold: 0,
+  inventory: [],             // owned, unequipped item ids (see rpg/items.js)
   // shared sphere-grid economy (FF10-style)
   spheres: freshSpheres(),
   unlockedNodes: new Set(),  // grid lock nodes opened (shared by whole party)
@@ -19,6 +20,7 @@ export const world = {
 export function resetWorld() {
   world.party = [];
   world.gold = 0;
+  world.inventory = [];
   world.spheres = freshSpheres();
   world.unlockedNodes = new Set();
   world.playerTile = null;
@@ -27,7 +29,7 @@ export function resetWorld() {
 }
 
 // ---- save / load (localStorage) --------------------------
-const SAVE_KEY = 'ashenSaga.save.v1';
+const SAVE_KEY = 'ashenSaga.save.v2';   // v2: added equipment/inventory
 
 export function hasSave() {
   try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
@@ -40,6 +42,7 @@ export function saveGame() {
     const data = {
       party: world.party,
       gold: world.gold,
+      inventory: world.inventory,
       spheres: world.spheres,
       unlockedNodes: [...world.unlockedNodes],
       playerTile: world.playerTile,
@@ -57,6 +60,7 @@ export function loadGame() {
     const d = JSON.parse(raw);
     world.party = d.party || [];
     world.gold = d.gold || 0;
+    world.inventory = d.inventory || [];
     world.spheres = Object.assign(freshSpheres(), d.spheres || {});
     world.unlockedNodes = new Set(d.unlockedNodes || []);
     world.playerTile = d.playerTile || null;

@@ -43,8 +43,14 @@ export default class OverworldScene extends MapScene {
       this.scene.pause();
       this.scene.launch('partyMenu');
     });
+    // open the equipment screen
+    this.input.keyboard.on('keydown-I', () => {
+      if (this.dialogue || this._leaving || this.scene.isPaused()) return;
+      this.scene.pause();
+      this.scene.launch('equip');
+    });
 
-    this.hint('Arrows/WASD: move   Space: talk/enter   M: party & skills   Walk into a foe to fight');
+    this.hint('Arrows/WASD move   Space talk   M skills   I equipment   walk into a foe to fight');
     this.flashBanner('The Ashen Wilds', 2000);
     if (world.party && world.party.length) saveGame();   // autosave on arriving/returning
   }

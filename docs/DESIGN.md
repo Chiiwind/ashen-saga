@@ -72,6 +72,8 @@ outer regions once later acts hand you Lv2/3/4 keys.
 1. ✅ Sphere Grid (faithful FF10) — engine that scales.
 2. **Save/load** — persist party + world across sessions. *(this pass)*
 3. **Gold + Inn** — economy foundation; inns heal for gold. *(this pass)*
-4. **Loot / Equipment** — gear tiers, drops, equip UI, stat integration. *(next)*
+4. ✅ **Loot / Equipment + Shops** — 60+ items over 5 tiers, class equip rules
+   (weapon types, armour weights, accessory slots), effects (crit/lifesteal),
+   inventory, battle drops, equip screen (I), merchant shop, stat integration.
 5. **Sphere grid expansion** — Fortune + Teleport/Warp, Act II+ regions behind Key locks. *(next)*
 6. **Content** — author Acts II→V areas/enemies/bosses/hubs against this doc.
