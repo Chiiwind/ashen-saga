@@ -7,8 +7,10 @@
 // ============================================================
 import { TILE, T, WALKABLE, drawTile, TILE_FRAMES, TILE_UNDERLAY, GRASS_FRAME } from './tiles.js';
 import { buildWorldTextures } from './worldSprites.js';
-import { world } from './state.js';
+import { world, saveGame } from './state.js';
 import { CLASS_MAP_CHAR } from './mapChars.js';
+import { itemById } from '../rpg/items.js';
+import Audio from '../audio.js';
 
 const STEP_MS = 150;
 const MAP_SCALE = 1.9;           // 32px atlas frames -> map size
@@ -22,7 +24,10 @@ export default class MapScene extends Phaser.Scene {
     this.mapW = 0; this.mapH = 0;
     this.npcs = [];
     this.foes = [];
+    this.chests = [];
     this.triggers = {};       // "x,y" -> fn(), fired on stepping onto a tile
+    this.encounterTable = null;   // random-battle pool, set via enableEncounters()
+    this.posKey = null;           // 'playerTile' | 'dungeonTile' — where to save our spot
     this.moving = false;
     this.face = { x: 0, y: 1 };
     this.dialogue = null;
@@ -129,11 +134,60 @@ export default class MapScene extends Phaser.Scene {
 
   addTrigger(tx, ty, fn) { this.triggers[tx + ',' + ty] = fn; }
 
+  // ---- treasure chests -------------------------------------
+  // loot: array of { gold?: n } and/or { item?: 'item_id' }
+  addChest({ tx, ty, id, loot }) {
+    const opened = world.openedChests.has(id);
+    const s = this.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2,
+      opened ? 'w_chest_open' : 'w_chest').setDepth(8).setScale(1.3);
+    const chest = { tx, ty, id, loot: loot || [], sprite: s, opened };
+    this.chests.push(chest);
+    return chest;
+  }
+
+  openChest(chest) {
+    if (chest.opened) { this.showDialogue('', ['The chest is empty.']); return; }
+    chest.opened = true;
+    world.openedChests.add(chest.id);
+    chest.sprite.setTexture('w_chest_open');
+    const msgs = [];
+    for (const l of chest.loot) {
+      if (l.gold) { world.gold += l.gold; msgs.push(l.gold + ' gold'); }
+      if (l.item) { world.inventory.push(l.item); const it = itemById(l.item); msgs.push(it ? it.name : l.item); }
+    }
+    this.updateGold();
+    Audio.sfx('confirm');
+    saveGame();
+    this.showDialogue('Treasure', ['You found ' + (msgs.length ? msgs.join(', ') : 'nothing') + '.']);
+  }
+
+  // ---- random encounters -----------------------------------
+  // table: array of encounter defs ({ name, intro, enemies:()=>[...] }).
+  // Every few steps on this map, one is rolled and fought. posKey names the
+  // world field ('playerTile'/'dungeonTile') to stash our spot before battle.
+  enableEncounters(table, min = 6, max = 12, posKey = null) {
+    this.encounterTable = table;
+    this.encounterRange = { min, max };
+    if (posKey) this.posKey = posKey;
+    this._rollSteps();
+  }
+  _rollSteps() { this._stepsLeft = Phaser.Math.Between(this.encounterRange.min, this.encounterRange.max); }
+
+  stepEncounter() {
+    if (!this.encounterTable || this._leaving || this.dialogue) return;
+    if (--this._stepsLeft > 0) return;
+    this._rollSteps();
+    const enc = Phaser.Utils.Array.GetRandom(this.encounterTable);
+    if (this.posKey) world[this.posKey] = { x: this.player.tx, y: this.player.ty };
+    this.gotoScene('battle', { encounters: [enc], returnTo: this.sys.settings.key });
+  }
+
   // ---- movement / collision --------------------------------
   inBounds(x, y) { return x >= 0 && y >= 0 && x < this.mapW && y < this.mapH; }
   walkable(x, y) { return this.inBounds(x, y) && WALKABLE[this.grid[y][x]]; }
   npcAt(x, y) { return this.npcs.find(n => n.tx === x && n.ty === y); }
   foeAt(x, y) { return this.foes.find(f => f.tx === x && f.ty === y); }
+  chestAt(x, y) { return this.chests.find(c => c.tx === x && c.ty === y); }
 
   tryMove(dx, dy) {
     if (this.moving || this.dialogue) return;
@@ -144,14 +198,18 @@ export default class MapScene extends Phaser.Scene {
 
     const foe = this.foeAt(nx, ny);
     if (foe) { this.onFoeContact(foe); return; }
-    if (!this.walkable(nx, ny) || this.npcAt(nx, ny)) return;
+    if (!this.walkable(nx, ny) || this.npcAt(nx, ny) || this.chestAt(nx, ny)) return;
 
     this.moving = true;
     p.tx = nx; p.ty = ny;
     this.tweens.add({
       targets: p.sprite, x: nx * TILE + TILE / 2, y: ny * TILE + TILE / 2,
       duration: STEP_MS, ease: 'Linear',
-      onComplete: () => { this.moving = false; this.fireTrigger(nx, ny); },
+      onComplete: () => {
+        this.moving = false;
+        this.fireTrigger(nx, ny);
+        if (!this._leaving) this.stepEncounter();
+      },
     });
   }
 
@@ -167,6 +225,8 @@ export default class MapScene extends Phaser.Scene {
   tryInteract() {
     if (this.dialogue) { this.advanceDialogue(); return; }
     const fx = this.player.tx + this.face.x, fy = this.player.ty + this.face.y;
+    const chest = this.chestAt(fx, fy);
+    if (chest) { this.openChest(chest); return; }
     const npc = this.npcAt(fx, fy);
     if (npc) {
       npc.sprite.setFlipX(this.face.x > 0);     // face the player

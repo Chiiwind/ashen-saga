@@ -22,10 +22,11 @@ outer regions once later acts hand you Lv2/3/4 keys.
 ## Act structure (level range · hub · enemies · boss · unlocks)
 
 ### Act I — The Ashen Wilds  ·  Lv 1–8   *(BUILT)*
-- **Hub:** Aldenmoor (village). Inn, (future) shop.
-- **Areas:** the Wilds, the Ash Road, (future) Goblin Warren.
-- **Enemies:** goblins, orc brutes, beastmen, night shamans.
-- **Boss:** Chaos Marauder.
+- **Story:** the green tide spills from the old Ashmoor Mine under the warboss **Grukk Skullsplitter**; Aldenmoor sends for wardens (you). Intro cutscene → clear the mine → slay Grukk → "End of Act I".
+- **Hub:** Aldenmoor (village). Inn (heals), Pedlar Rosa's shop, Watchman Corin gives the mine quest.
+- **Areas:** the Ashen Wilds overworld (random greenskin battles as you travel) → the **Ashmoor Mine**, a 4-screen dungeon (Descent → Warrens → Ore Caverns → Grukk's Throne) with split paths, treasure chests, random encounters, and set-piece brutes.
+- **Enemies:** goblins, orc grunts/brutes, ogres, night shamans. **Boss:** Grukk Skullsplitter (+ orc guard).
+- **Encounters:** random battles on field tiles (overworld + mine floors 0–2); bosses/brutes are visible set-pieces. Chests tracked in `world.openedChests`; floors linked by stairs via `world.dungeonFloor`/`dungeonEntry`.
 - **Unlocks:** the starting grid ring; **Lv1 Key spheres** → first locked band.
 - **Gear tier:** Iron. **Spheres:** Power / Mana / Speed / Ability.
 
@@ -62,7 +63,7 @@ outer regions once later acts hand you Lv2/3/4 keys.
 
 ## System scaling by act
 
-- **EXP curve:** `expForNext(level) = round(28 * level^1.5)` (already in). Enemy EXP/gold roughly `×1.6` per act.
+- **EXP curve:** `expForNext(level) = round(32 * rung^1.85 * 5.5^band)` where each act is a 10-level *band* and `rung` is 1–10 within it. Cost climbs steeply toward the top of a band → a **soft cap** if you over-grind one area; crossing into the next act resets the rung cheap, and that act's foes pay ~`5.5×` more EXP (`actExpScale(act)`), which carries the next ten levels. So: steady progress in-area, a wall past it, a fresh ramp each act.
 - **Gold:** enemies drop gold ≈ their EXP. Inn rest costs `~8 × avg party level`. Shops sell current-act gear + a few spheres.
 - **Sphere economy:** battles grant S.Lv (movement) + typed spheres; rarer high-tier spheres (HP+40, big abilities) sit behind Key locks. Fortune/Teleport/Warp spheres are act-gated as above.
 - **Sphere grid growth:** each act = a new **band/region** appended in `spheregrid.js` (more stat/ability nodes + that act's Key locks + a couple of cross-class ability nodes so builds diversify late).

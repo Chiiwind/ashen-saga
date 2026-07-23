@@ -12,6 +12,7 @@ import PartyCreateScene from './scenes/PartyCreateScene.js';
 import PartyMenuScene from './scenes/PartyMenuScene.js';
 import EquipScene from './scenes/EquipScene.js';
 import ShopScene from './scenes/ShopScene.js';
+import { world } from './world/state.js';
 
 const config = {
   type: Phaser.CANVAS,   // Canvas renderer displays reliably in the preview pane (WebGL can blank out)
@@ -31,3 +32,4 @@ const config = {
 };
 
 window.__GAME = new Phaser.Game(config);
+window.__WORLD = world;   // debug handle (paired with __GAME) for testing

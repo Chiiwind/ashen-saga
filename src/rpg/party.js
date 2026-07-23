@@ -179,7 +179,25 @@ export function unlockNode(c, nodeId) {
 }
 
 // ---- progression -----------------------------------------
-export function expForNext(level) { return Math.round(28 * Math.pow(level, 1.5)); }
+// EXP curve, tuned for act-by-act pacing.
+// Each act spans a 10-level "band". Inside a band the cost climbs steeply
+// (exponent 1.85), so grinding a single area's low-EXP foes hits a natural
+// soft cap around its top rungs — you *can* push higher, but it crawls.
+// Crossing into the next act resets the rung cheap again; that act's foes
+// award far more EXP (scaled up ~ the same 5.5x), which is what actually
+// carries the party up the next ten levels. Net effect: steady progress
+// within an area, a wall if you over-grind, and a fresh ramp each act.
+const LEVELS_PER_ACT = 10;
+export function expForNext(level) {
+  const band = Math.floor((level - 1) / LEVELS_PER_ACT);   // 0: L1-10, 1: L11-20, ...
+  const rung = ((level - 1) % LEVELS_PER_ACT) + 1;         // 1..10 within the band
+  return Math.round(32 * Math.pow(rung, 1.85) * Math.pow(5.5, band));
+}
+
+// How much to scale an act's enemy EXP/AP so its band is payable. Multiply a
+// base (Act I) enemy's exp/ap by actExpScale(actNumber) when authoring later
+// acts, mirroring the per-band cost jump in expForNext.
+export function actExpScale(act) { return Math.pow(5.5, Math.max(0, act - 1)); }
 
 // award EXP (-> levels), Sphere Levels (movement), and spheres (activation)
 export function grantRewards(party, exp, ap) {

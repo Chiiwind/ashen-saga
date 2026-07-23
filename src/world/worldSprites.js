@@ -87,6 +87,28 @@ const PAINTERS = {
     g.fillStyle(0xdcd4bc, 1); g.fillTriangle(6, 5, 2, -1, 9, 4); g.fillTriangle(18, 5, 22, -1, 15, 4); // horns
     g.fillStyle(0xff4a3a, 1); g.fillRect(9, 6, 2, 2); g.fillRect(13, 6, 2, 2);
   },
+  // treasure chest — closed
+  chest(g) {
+    shadow(g);
+    g.fillStyle(0x000000, 0.35); g.fillEllipse(12, 26, 20, 6);
+    g.fillStyle(0x5a3a1c, 1); g.fillRoundedRect(4, 12, 16, 13, 2);   // body
+    g.fillStyle(0x6b4a24, 1); g.fillRoundedRect(4, 8, 16, 7, 3);     // domed lid
+    g.fillStyle(0x3a2410, 1); g.fillRect(4, 14, 16, 2);              // lid seam
+    g.fillStyle(0xd6a93a, 1); g.fillRect(4, 10, 16, 1.5);            // gold band
+    g.fillStyle(0xd6a93a, 1); g.fillRect(5, 18, 1.5, 6); g.fillRect(18, 18, 1.5, 6);
+    g.fillStyle(0xf0d060, 1); g.fillRect(11, 14, 2, 4);             // lock
+  },
+  // treasure chest — opened (lid up, empty glint)
+  chest_open(g) {
+    shadow(g);
+    g.fillStyle(0x000000, 0.35); g.fillEllipse(12, 26, 20, 6);
+    g.fillStyle(0x2a1a0c, 1); g.fillRoundedRect(5, 13, 14, 4, 2);    // dark interior
+    g.fillStyle(0x5a3a1c, 1); g.fillRoundedRect(4, 15, 16, 10, 2);   // body
+    g.fillStyle(0xd6a93a, 1); g.fillRect(5, 19, 1.5, 5); g.fillRect(18, 19, 1.5, 5);
+    g.fillStyle(0x6b4a24, 1); g.fillRoundedRect(3, 3, 18, 6, 3);     // raised lid
+    g.fillStyle(0xd6a93a, 1); g.fillRect(3, 5, 18, 1.5);
+    g.fillStyle(0x8a857a, 0.5); g.fillRect(10, 14, 4, 1);           // faint empty glint
+  },
 };
 
 export function buildWorldTextures(scene) {

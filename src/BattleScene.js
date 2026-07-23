@@ -771,7 +771,11 @@ export default class BattleScene extends Phaser.Scene {
       world.gold += this.earnedGold;
       for (const id of this.droppedItems) world.inventory.push(id);
       events = grantRewards(world.party, this.earnedExp, this.earnedAp);
-      if (act1Win) { this.launch.returnTo = 'overworld'; world.playerTile = { x: 16, y: 4 }; }  // emerge from the mine
+      if (act1Win) {                                   // climb out of the mine, Act I done
+        this.launch.returnTo = 'overworld';
+        world.playerTile = { x: 16, y: 4 };
+        world.dungeonFloor = 0; world.dungeonTile = null;
+      }
     } else {
       this.persistParty('full');                                  // routed → fall back, patched up
     }

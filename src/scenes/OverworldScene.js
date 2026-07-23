@@ -30,36 +30,22 @@ export default class OverworldScene extends MapScene {
       this.flashBanner('Entering Aldenmoor...', 900);
       this.gotoScene('town');
     });
-    // Ashmoor Mine entrance
+    // Ashmoor Mine entrance — always drop in at the top of floor 0
     this.addTrigger(this.mineDoor.x, this.mineDoor.y, () => {
       world.playerTile = { x: this.mineDoor.x, y: this.mineDoor.y + 1 };
+      world.dungeonFloor = 0; world.dungeonEntry = '<'; world.dungeonTile = null;
       this.flashBanner('The Ashmoor Mine...', 900);
       this.gotoScene('dungeon');
     });
 
-    // roaming greenskins on the road up to the mine
-    this.spawnFoe('goblin-pack', PATH_X, 9, 'foe', 'Goblin Ambush', [ACT1.goblinAmbush]);
-    this.spawnFoe('orc-patrol', PATH_X + 1, 5, 'foe2', 'Orc Patrol', [ACT1.orcPatrol]);
-    // a repeatable band, off the road, for a little grinding
-    this.spawnFoe('roamers', 10, 15, 'foe', 'Goblin Roamers', [ACT1.goblinAmbush], true);
+    // The Wilds crawl with greenskins — random battles as you travel.
+    this.enableEncounters([ACT1.goblinAmbush, ACT1.goblinAmbush, ACT1.orcPatrol], 9, 16, 'playerTile');
 
     this.enableMenus();
-    this.hint('Arrows/WASD move   Space talk   M skills   I gear   walk into a foe to fight');
+    this.hint('Arrows/WASD move   Space talk   M skills   I gear   greenskins roam the wilds');
     this.flashBanner('The Ashen Wilds', 2000);
     if (world.party && world.party.length) saveGame();
   }
-
-  spawnFoe(id, tx, ty, tex, name, encounters, repeatable) {
-    if (!repeatable && world.defeatedFoes.has(id)) return;
-    const foe = this.addFoe({ id, tx, ty, tex, name, encounters });
-    foe.onContact = () => {
-      world.playerTile = { x: this.player.tx, y: this.player.ty };
-      this.flashBanner(name + '!', 900);
-      this.gotoScene('battle', { encounters, returnTo: 'overworld', foeId: repeatable ? null : id });
-    };
-  }
-
-  onFoeContact(foe) { foe.onContact(); }
 
   makeMap() {
     const g = [];
