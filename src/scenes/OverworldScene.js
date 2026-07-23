@@ -7,7 +7,7 @@
 import MapScene from '../world/MapScene.js';
 import { T } from '../world/tiles.js';
 import { ENCOUNTERS } from '../data.js';
-import { world } from '../world/state.js';
+import { world, saveGame } from '../world/state.js';
 
 const MW = 34, MH = 22;
 const PATH_X = 16;            // two-wide path runs up columns 16-17
@@ -46,6 +46,7 @@ export default class OverworldScene extends MapScene {
 
     this.hint('Arrows/WASD: move   Space: talk/enter   M: party & skills   Walk into a foe to fight');
     this.flashBanner('The Ashen Wilds', 2000);
+    if (world.party && world.party.length) saveGame();   // autosave on arriving/returning
   }
 
   spawnFoe(id, tx, ty, tex, name, encounters) {

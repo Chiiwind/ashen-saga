@@ -212,7 +212,7 @@ export default class PartyMenuScene extends Phaser.Scene {
     const s = world.spheres;
     this.spText.setText(
       `Power   ${s.power}\nMana    ${s.mana}\nSpeed   ${s.speed}\nAbility ${s.ability}\n` +
-      `Keys 1-4: ${s.key1} ${s.key2} ${s.key3} ${s.key4}`
+      `Keys 1-4: ${s.key1} ${s.key2} ${s.key3} ${s.key4}\n\nGold: ${world.gold}`
     );
 
     // current node info

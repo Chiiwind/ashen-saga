@@ -5,7 +5,8 @@
 // ============================================================
 import MapScene from '../world/MapScene.js';
 import { T } from '../world/tiles.js';
-import { world } from '../world/state.js';
+import { world, saveGame } from '../world/state.js';
+import { derivedStats } from '../rpg/party.js';
 
 const MW = 26, MH = 18;
 
@@ -30,11 +31,7 @@ export default class TownScene extends MapScene {
     // --- NPCs ------------------------------------------------
     this.addNpc({
       tx: 5, ty: 6, char: 'butcher', name: 'Innkeeper Bertwald',
-      onInteract: () => this.showDialogue('Innkeeper Bertwald', [
-        'Weary from the road? Sit by the fire a while.',
-        'Ale\'s watered and the stew\'s thin, but the roof holds.',
-        'You look rested. Off with you, then — and mind the Wilds.',
-      ]),
+      onInteract: () => this.restAtInn(),
     });
     this.addNpc({
       tx: 20, ty: 6, char: 'merchant', name: 'Pedlar Rosa',
@@ -63,6 +60,29 @@ export default class TownScene extends MapScene {
     this.hint('Arrows/WASD: move    Space: talk    Step on the gate to leave');
     this.flashBanner('Aldenmoor', 2000);
     world.visitedTown = true;
+  }
+
+  restAtInn() {
+    const party = world.party || [];
+    const avgLv = party.reduce((s, c) => s + c.level, 0) / Math.max(1, party.length);
+    const cost = Math.max(10, Math.round(8 * avgLv));
+    const wounded = party.some(c => { const s = derivedStats(c); return c.hp < s.maxHp || c.mp < s.maxMp; });
+    if (!wounded) {
+      this.showDialogue('Innkeeper Bertwald', ['You look hale enough already — save your coin.']);
+      return;
+    }
+    if (world.gold < cost) {
+      this.showDialogue('Innkeeper Bertwald', [`A night's rest is ${cost} gold. Come back when your purse is heavier — you have ${world.gold}.`]);
+      return;
+    }
+    world.gold -= cost;
+    for (const c of party) { const s = derivedStats(c); c.hp = s.maxHp; c.mp = s.maxMp; }
+    this.updateGold();
+    saveGame();
+    this.showDialogue('Innkeeper Bertwald', [
+      `Rest well, friends. That'll be ${cost} gold.`,
+      `Your band is fully restored.  (${world.gold} gold left)`,
+    ]);
   }
 
   makeMap() {

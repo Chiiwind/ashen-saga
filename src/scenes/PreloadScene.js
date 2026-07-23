@@ -35,7 +35,7 @@ export default class PreloadScene extends Phaser.Scene {
       this.makeAnim('npc', c, 'idle', 5);
       this.makeAnim('npc', c, 'run', 9);
     }
-    this.scene.start('partyCreate');
+    this.scene.start('title');
   }
 
   // frames are named "<char>_<kind>_<n>.png" (0..3). Character names don't

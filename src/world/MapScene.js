@@ -32,6 +32,10 @@ export default class MapScene extends Phaser.Scene {
     // UI first — build() may call flashBanner()/hint()
     this.buildDialogueUI();
     this.buildBanner();
+    this.goldText = this.add.text(948, 10, '', {
+      fontFamily: 'Trebuchet MS', fontSize: '16px', color: '#ffd24a', stroke: '#000', strokeThickness: 3,
+    }).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
+    this.updateGold();
 
     this.build();             // subclass: draws ground, spawns player/npcs/foes, sets triggers
 
@@ -245,6 +249,8 @@ export default class MapScene extends Phaser.Scene {
       stroke: '#000', strokeThickness: 5, fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(100).setScrollFactor(0).setAlpha(0);
   }
+
+  updateGold() { if (this.goldText) this.goldText.setText((world.gold || 0) + ' gold'); }
 
   flashBanner(text, ms = 1800) {
     this.banner.setText(text).setAlpha(1);

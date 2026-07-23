@@ -60,6 +60,7 @@ export default class BattleScene extends Phaser.Scene {
     this.transitioning = false;
     this.earnedExp = 0;
     this.earnedAp = 0;
+    this.earnedGold = 0;
     this.spawnEnemies(this.encList[0].enemies());
 
     // --- audio ----------------------------------------------
@@ -619,6 +620,7 @@ export default class BattleScene extends Phaser.Scene {
     if (unit.side === 'enemy') {
       this.earnedExp += unit.exp || 0;
       this.earnedAp += unit.ap || 0;
+      this.earnedGold += unit.gold || 0;
     }
     Audio.sfx('ko');
     this.tweens.add({ targets: unit.sprite, alpha: 0.12, angle: unit.side === 'hero' ? -90 : 90, y: unit.sprite.y + 14, duration: 500 });
@@ -760,6 +762,7 @@ export default class BattleScene extends Phaser.Scene {
     if (win) {
       if (fromMap && this.launch.foeId) world.defeatedFoes.add(this.launch.foeId);
       this.persistParty('keep');                                  // carry wounds
+      world.gold += this.earnedGold;
       events = grantRewards(world.party, this.earnedExp, this.earnedAp);
     } else {
       this.persistParty('full');                                  // routed → fall back, patched up
@@ -770,7 +773,7 @@ export default class BattleScene extends Phaser.Scene {
     const lines = [];
     if (win) {
       const sLv = Math.max(2, Math.round(this.earnedAp / 5));
-      lines.push(`+${this.earnedExp} EXP    +${sLv} S.Lv each    +spheres`);
+      lines.push(`+${this.earnedExp} EXP    +${sLv} S.Lv    +spheres    +${this.earnedGold} gold`);
       for (const e of events) lines.push(`${e.name} reached Lv ${e.level}!`);
       lines.push(this.endRoute === 'return' ? 'Enter to continue' : 'Enter to play again');
     } else {
