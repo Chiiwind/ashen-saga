@@ -5,6 +5,11 @@ Animated characters, monsters, weapons, and dungeon tiles.
 - Author: **0x72** — https://0x72.itch.io/dungeontileset-ii
 - License: **Creative Commons Zero (CC0 1.0 Universal)** — public domain, no attribution required (credited here as courtesy).
 
+## Shade — "16×16 Puny World Tileset"  (`punyworld.png`)
+Overworld terrain tiles (grass, dirt, water, trees, rock, bridge).
+- Author: **Shade** — https://opengameart.org/content/16x16-puny-world-tileset
+- License: **CC0** (public domain, no attribution required).
+
 ## superdark — "16×16 Free NPC pack"  (`npc.png` / `npc.json`)
 Animated townsfolk used on the overworld/town (player avatar + NPCs).
 - Author: **superdark** — https://superdark.itch.io/16x16-free-npc-pack

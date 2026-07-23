@@ -17,6 +17,24 @@ export const WALKABLE = {
   [T.FLOWERS]: true,
 };
 
+// ---- Puny World tileset mapping (CC0, Shade) --------------
+// 27 tiles wide; frame index = row*27 + col.
+export const PW_COLS = 27;
+const F = (col, row) => row * PW_COLS + col;
+export const GRASS_FRAME = F(1, 1);
+// tile code -> tileset frame (codes not listed fall back to procedural drawTile)
+export const TILE_FRAMES = {
+  [T.GRASS]: F(1, 1),
+  [T.PATH]: F(5, 1),
+  [T.WATER]: F(8, 13),
+  [T.TREE]: F(7, 8),
+  [T.MTN]: F(2, 5),
+  [T.BRIDGE]: F(10, 31),
+  [T.FLOWERS]: F(2, 0),
+};
+// these draw a grass tile underneath (transparent overlays)
+export const TILE_UNDERLAY = new Set([T.TREE, T.MTN]);
+
 // deterministic per-tile jitter so grass/paths aren't uniform
 function hash(x, y) { return ((x * 73856093) ^ (y * 19349663)) >>> 0; }
 

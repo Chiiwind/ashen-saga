@@ -17,6 +17,7 @@ export default class OverworldScene extends MapScene {
   constructor() { super('overworld'); }
 
   build() {
+    this.tileset = 'punyworld';           // render terrain from the CC0 tileset
     const grid = this.makeMap();
     this.renderGround(grid);
 

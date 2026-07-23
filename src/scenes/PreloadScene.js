@@ -20,6 +20,7 @@ export default class PreloadScene extends Phaser.Scene {
   preload() {
     this.load.atlas('dungeon', 'assets/dungeon.png', 'assets/dungeon.json');  // 0x72 (battle)
     this.load.atlas('npc', 'assets/npc.png', 'assets/npc.json');              // superdark (overworld/town)
+    this.load.spritesheet('punyworld', 'assets/punyworld.png', { frameWidth: 16, frameHeight: 16 }); // Shade CC0 terrain
     this.add.text(480, 270, 'Loading...', {
       fontFamily: 'Trebuchet MS', fontSize: '22px', color: '#e8e0d0',
     }).setOrigin(0.5);

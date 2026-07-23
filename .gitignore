@@ -6,6 +6,7 @@ Thumbs.db
 # dev-only screenshot captures (see /__shot in server.js)
 _shot*.png
 _preview.png
+_crop*.png
 
 # asset sheets kept locally for evaluation until upstream licence is confirmed
 # (dungeon.* = 0x72 CC0 and npc.* = superdark free-for-commercial ARE committed —

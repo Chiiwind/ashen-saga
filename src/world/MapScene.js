@@ -5,7 +5,7 @@
 //  NPC interaction, dialogue, and fade transitions.
 //  Subclasses implement build() to define their map + actors.
 // ============================================================
-import { TILE, T, WALKABLE, drawTile } from './tiles.js';
+import { TILE, T, WALKABLE, drawTile, TILE_FRAMES, TILE_UNDERLAY, GRASS_FRAME } from './tiles.js';
 import { buildWorldTextures } from './worldSprites.js';
 import { world } from './state.js';
 import { CLASS_MAP_CHAR } from './mapChars.js';
@@ -51,14 +51,35 @@ export default class MapScene extends Phaser.Scene {
     this.mapH = grid.length;
     this.mapW = grid[0].length;
     const w = this.mapW * TILE, h = this.mapH * TILE;
-    // Draw the whole map ONCE into an off-list graphics, then bake it to a
-    // texture. A live Graphics replays every draw command each frame (crushing
-    // in the Canvas renderer); a single baked image blits in one op.
+
+    // Tileset path (overworld): stamp real 16px tiles into one RenderTexture.
+    // Codes without a tileset frame (e.g. town-building tiles) fall back to the
+    // procedural drawTile. Either way it bakes to a single texture = one blit/frame.
+    if (this.tileset && this.textures.exists(this.tileset)) {
+      const rt = this.add.renderTexture(0, 0, w, h).setOrigin(0, 0).setDepth(0);
+      const stamp = this.make.image({ x: 0, y: 0, key: this.tileset, frame: 0, add: false })
+        .setOrigin(0, 0).setScale(TILE / 16);
+      const gfx = this.make.graphics({ add: false });
+      for (let y = 0; y < this.mapH; y++) {
+        for (let x = 0; x < this.mapW; x++) {
+          const code = grid[y][x], px = x * TILE, py = y * TILE;
+          const f = TILE_FRAMES[code];
+          if (f != null) {
+            if (TILE_UNDERLAY.has(code)) { stamp.setFrame(GRASS_FRAME); rt.draw(stamp, px, py); }
+            stamp.setFrame(f); rt.draw(stamp, px, py);
+          } else {
+            gfx.clear(); drawTile(gfx, code, 0, 0); rt.draw(gfx, px, py);
+          }
+        }
+      }
+      stamp.destroy(); gfx.destroy();
+      return;
+    }
+
+    // Procedural path (town): draw once into an off-list graphics, bake to texture.
     const g = this.make.graphics({ add: false });
     for (let y = 0; y < this.mapH; y++) {
-      for (let x = 0; x < this.mapW; x++) {
-        drawTile(g, grid[y][x], x * TILE, y * TILE);
-      }
+      for (let x = 0; x < this.mapW; x++) drawTile(g, grid[y][x], x * TILE, y * TILE);
     }
     const key = 'ground_' + this.sys.settings.key;
     if (this.textures.exists(key)) this.textures.remove(key);
