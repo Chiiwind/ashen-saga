@@ -4,7 +4,7 @@
 //  type a name. Runs before the overworld when no party exists.
 // ============================================================
 import { CLASS_LIST, CLASSES } from '../rpg/classes.js';
-import { makeCharacter, derivedStats } from '../rpg/party.js';
+import { makeCharacter, derivedStats, grantStartingStipend } from '../rpg/party.js';
 import { ABILITIES } from '../data.js';
 import { world } from '../world/state.js';
 import { buildUnitTextures } from '../sprites.js';
@@ -160,6 +160,7 @@ export default class PartyCreateScene extends Phaser.Scene {
     this.slot++;
     if (this.slot >= 5) {
       world.party = this.built;
+      grantStartingStipend();
       this.cameras.main.fadeOut(300);
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('overworld'));
       return;

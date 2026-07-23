@@ -769,7 +769,8 @@ export default class BattleScene extends Phaser.Scene {
     // banner
     const lines = [];
     if (win) {
-      lines.push(`+${this.earnedExp} EXP    +${this.earnedAp} AP  (each)`);
+      const sLv = Math.max(2, Math.round(this.earnedAp / 5));
+      lines.push(`+${this.earnedExp} EXP    +${sLv} S.Lv each    +spheres`);
       for (const e of events) lines.push(`${e.name} reached Lv ${e.level}!`);
       lines.push(this.endRoute === 'return' ? 'Enter to continue' : 'Enter to play again');
     } else {
