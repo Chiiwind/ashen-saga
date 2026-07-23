@@ -16,6 +16,12 @@
 export const ABILITIES = {
   attack:      { name: 'Attack',        kind: 'phys',  target: 'enemy',      power: 1.0,  mp: 0,  desc: 'A basic weapon strike.' },
 
+  // Greatsword
+  guard:       { name: 'Guard',         kind: 'phys',  target: 'self',       power: 0,    mp: 2,  buff: { stat: 'def', mult: 1.7 }, desc: 'Raise your guard — brace for blows.' },
+  sunder:      { name: 'Sunder',        kind: 'phys',  target: 'enemy',      power: 1.1,  mp: 5,  buff: { stat: 'def', mult: 0.7 }, desc: 'A blow that shatters armour.' },
+  heroicBlow:  { name: 'Heroic Blow',   kind: 'phys',  target: 'enemy',      power: 2.0,  mp: 8,  desc: 'A mighty two-handed overhead strike.' },
+  rally:       { name: 'Rally',         kind: 'phys',  target: 'allAllies',  power: 0,    mp: 12, buff: { stat: 'atk', mult: 1.3 }, desc: 'A rousing cry — the band hits harder.' },
+
   // Warrior Priest
   smite:       { name: 'Smite',         kind: 'magic', target: 'enemy',      power: 1.4,  mp: 6,  desc: 'Holy fire scorches one foe.' },
   healingPrayer:{ name: 'Healing Prayer',kind: 'magic', target: 'ally',      power: 1.6,  mp: 8,  heal: true, desc: "Restore an ally's wounds." },

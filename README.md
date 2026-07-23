@@ -3,8 +3,9 @@
 A browser-based, FF6-inspired tactical RPG set in an original grimdark-fantasy world
 (generic Warhammer-fantasy archetypes — no trademarked names, places, or characters).
 
-**Status:** playable slice — explore an overworld and a town, then fight
-Active-Time battles (with synthesized sound, particles, and a boss).
+**Status:** playable slice — build a party of five from a class roster,
+explore an overworld and town, fight Active-Time battles, and grow your
+heroes through levels and branching skill trees.
 
 ## Play
 
@@ -14,10 +15,19 @@ node server.js
 
 Then open http://localhost:5178
 
+**Create your band:** at the start, pick a class and name for each of your five
+heroes from a roster of eight (Greatsword, Warrior Priest, Bright Wizard, Dwarf
+Slayer, Waywatcher, Witch Hunter, Grey Wizard, Halfling Physician).
+
 **Explore (overworld + town):**
 - Arrows / WASD to walk. The camera follows you.
 - `Space` / `Enter` to talk to townsfolk; step on the town door to enter, on the gate to leave.
+- `M` opens the party & skill-tree menu.
 - Walk into a roaming foe to start a battle. Beaten foes stay beaten.
+
+**Grow your heroes:** battles grant **EXP** (→ levels → higher stats) and **AP**.
+Spend AP in each hero's **branching skill tree** (`M`) to learn new abilities,
+rank up, and buy stat boosts. Wounds and progress persist between fights.
 
 **Battle:**
 - Gauges fill in real time. When a hero's ATB bar is full, time pauses (Wait mode) and you choose a command.
@@ -56,20 +66,26 @@ src/
   sprites.js        procedural battle + particle art baked to textures
   audio.js          synthesized SFX + music (Web Audio, no asset files)
   BattleScene.js    the ATB battle system + encounter flow
+  rpg/
+    classes.js      8 classes: base stats, growth, skill trees
+    party.js        characters, derived stats, EXP/levels, AP, learning
   world/
     tiles.js        tile codes, walkability, per-tile drawing
     worldSprites.js top-down overworld/town character art
-    state.js        cross-scene world state (position, beaten foes)
+    state.js        cross-scene world state (party, position, beaten foes)
     MapScene.js     base explore scene: tiles, movement, camera, dialogue
   scenes/
-    OverworldScene.js  the world map, town gateway, roaming foes
-    TownScene.js       walled town, buildings, NPCs, gate
+    PartyCreateScene.js  name + class picker for your five heroes
+    PartyMenuScene.js    party list + branching skill trees (spend AP)
+    OverworldScene.js    the world map, town gateway, roaming foes
+    TownScene.js         walled town, buildings, NPCs, gate
 ```
 
 ## Next up (ideas)
 
-- Persistent party HP across battles + an inn that actually heals
-- Level-ups / rewards on victory
-- Story framing (why this band fights) and more towns/encounters
-- Status effects (poison, stun), elemental weaknesses, equipment
+- An inn that actually heals (spend gold to rest)
+- Equipment / loot and gold from battles
+- Status effects (poison, stun), elemental weaknesses
+- More towns, encounters, and story framing
+- Save/load (persist the party between sessions)
 - Better art (hand-drawn or imported sprite sheets)

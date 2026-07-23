@@ -36,7 +36,14 @@ export default class OverworldScene extends MapScene {
     this.spawnFoe('goblin-pack', PATH_X, 9, 'foe', 'Goblin Pack', [ENCOUNTERS[0]]);
     this.spawnFoe('warband', PATH_X, 4, 'foe2', 'Chaos Warband', [ENCOUNTERS[1]]);
 
-    this.hint('Arrows/WASD: move    Space: talk / enter    Walk into a foe to fight');
+    // open the party / skill-tree menu
+    this.input.keyboard.on('keydown-M', () => {
+      if (this.dialogue || this._leaving || this.scene.isPaused()) return;
+      this.scene.pause();
+      this.scene.launch('partyMenu');
+    });
+
+    this.hint('Arrows/WASD: move   Space: talk/enter   M: party & skills   Walk into a foe to fight');
     this.flashBanner('The Ashen Wilds', 2000);
   }
 
